@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    mode: "joint_trajectory" # or "forward_position"
+    leader_topic: "/leader/joint_states"
+    jtc_topic: "/follower/arm_trajectory_controller/joint_trajectory"
+    fwd_topic: "/follower/arm_forward_controller/commands"
+    gripper_action: "follower/gripper_controller/gripper_cmd"
+
+    # Timing
+    publish_rate_hz: 50.0
+    point_dt_s: 0.06 # time_from_start for trajectory points (60ms = 3x50Hz = 3 * 20ms)
+    stale_timeout_s: 0.25 # Stop if no leader data for this long
+
+    # Gripper Control
+    gripper_deadband: 0.005 # Min position change to send new goal (rad)
+    gripper_min_interval_s: 0.05 # Min time between gripper goals (50ms = 20Hz max)
+
+    # Joint Names
+    arm_joints:
+      - "shoulder_pan"
+      - "shoulder_lift"
+      - "elbow_flex"
+      - "wrist_flex"
+      - "wrist_roll"
+    gripper_joint: "gripper"

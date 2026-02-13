@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+    mode: "joint_trajectory" # or "forward_position"
+    leader_topic: "/leader/joint_states"
+    jtc_topic: "/follower/trajectory_controller/joint_trajectory"
+    fwd_topic: "/follower/forward_controller/commands"
+
+    # Timing
+    publish_rate_hz: 50.0
+    point_dt_s: 0.04 # time_from_start for trajectory points (40ms = 2x50Hz = 2 * 20ms)
+    stale_timeout_s: 0.25 # Stop if no leader data for this long
+
+    lpf_alpha: 1.0 # 1.0 off; try 0.3 if jittery
+
+    # Joint Names
+    arm_joints:
+      - "shoulder_pan"
+      - "shoulder_lift"
+      - "elbow_flex"
+      - "wrist_flex"
+      - "wrist_roll"
+      - "gripper"
