@@ -1,0 +1,23 @@
+episode_recorder:
+  ros__parameters:
+    # Topics to record — add your sensor and action topics here.
+    # The recorder uses GenericSubscription, so any message type works.
+    topics:
+      - /follower/image_raw
+      - /static_camera/image_raw
+      - /follower/joint_states
+      - /follower/forward_controller/commands
+
+    # Base directory for episode bags.
+    # Episodes stored under: <root_dir>/<experiment_name>/episode_NNNNNN/
+    root_dir: /tmp/episode_recorder
+
+    # Bag storage backend: "mcap" (default) or "sqlite3"
+    storage_id: mcap
+
+    # Maximum episode duration in seconds (0 = unlimited).
+    max_episode_duration: 0.0
+
+    # Experiment name — used as subdirectory under root_dir and stored
+    # in rosbag2 metadata.yaml custom_data. Empty = no subdirectory.
+    experiment_name: "pick_and_place"
