@@ -1,0 +1,24 @@
+[workspace]
+name = "so101-ros-physical-ai"
+description = "SO-101 ROS 2 stack tooling (Rerun bridge, utilities, dev env)"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+version = "0.1.0"
+
+[dependencies]
+python = "3.12.*"
+rerun-sdk = ">=0.29.1,<0.30"
+pyyaml = ">=6.0.3,<7"
+numpy = ">=2.4.2,<3"
+
+[tasks]
+# Run the bridge in a ROS-aware shell:
+# - sources ROS Jazzy
+# - sources your overlay (if built)
+# - runs with pixi's python (so rerun is available)
+# - forwards all extra args to the Python script
+bridge = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_ros2_to_rerun.py \"$@\"' -- " }
+
+# Launch the native Rerun viewer (connect the bridge with --connect)
+viewer = { cmd = "python -m rerun" }
+
