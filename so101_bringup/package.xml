@@ -15,6 +15,10 @@
 
   <depend>so101_description</depend>
 
+  <!-- cameras.launch.py spawns nodes from these packages -->
+  <exec_depend>usb_cam</exec_depend>
+  <exec_depend>realsense2_camera</exec_depend>
+
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
