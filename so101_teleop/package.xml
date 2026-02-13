@@ -5,7 +5,7 @@
   <version>0.1.0</version>
   <description>SO101 Leader-Follower Teleop Package</description>
   <maintainer email="dmitri@manajev.com">Dmitri Manajev</maintainer>
-  <license>MIT</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
