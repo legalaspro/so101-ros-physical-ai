@@ -1,0 +1,87 @@
+# OMPL Planning Configuration for SO101 Robot
+# This file configures the motion planning pipeline and available planners
+
+# ============================================
+# Planning Pipeline Configuration
+# ============================================
+planning_plugins:
+  - ompl_interface/OMPLPlanner
+
+# Request adapters: Pre-processing steps BEFORE planning
+# These validate and prepare the planning request
+request_adapters:
+  - default_planning_request_adapters/ResolveConstraintFrames
+  - default_planning_request_adapters/ValidateWorkspaceBounds
+  - default_planning_request_adapters/CheckStartStateBounds
+  - default_planning_request_adapters/CheckStartStateCollision
+
+# Response adapters: Post-processing steps AFTER planning
+# These optimize and validate the planned trajectory
+response_adapters:
+  - default_planning_response_adapters/AddTimeOptimalParameterization
+  - default_planning_response_adapters/ValidateSolution
+  - default_planning_response_adapters/DisplayMotionPath
+
+# ============================================
+# Planner Algorithm Configurations
+# ============================================
+planner_configs:
+  # RRTConnect: Fast, bidirectional RRT - best for quick solutions
+  RRTConnect:
+    type: geometric::RRTConnect
+    range: 0.0 # Max step size (0.0 = auto-computed based on state space)
+
+  # RRTstar: Asymptotically optimal version of RRT - slower but better paths
+  RRTstar:
+    type: geometric::RRTstar
+    range: 0.0
+    goal_bias: 0.05 # 5% probability of sampling the goal directly
+    delay_collision_checking: 1
+
+  # RRT: Basic rapidly-exploring random tree
+  RRT:
+    type: geometric::RRT
+    range: 0.0
+    goal_bias: 0.05
+
+  # PRM: Probabilistic Roadmap - good for complex environments
+  PRM:
+    type: geometric::PRM
+    max_nearest_neighbors: 10
+
+  # PRMstar: Optimal version of PRM
+  PRMstar:
+    type: geometric::PRMstar
+
+  # KPIECE: Kinodynamic Planning by Interior-Exterior Cell Exploration
+  KPIECE:
+    type: geometric::KPIECE
+    range: 0.0
+    goal_bias: 0.05
+    border_fraction: 0.9
+    failed_expansion_score_factor: 0.5
+    min_valid_path_fraction: 0.5
+
+  # LBKPIECE: Lazy Bi-directional KPIECE
+  LBKPIECE:
+    type: geometric::LBKPIECE
+    range: 0.0
+    border_fraction: 0.9
+    min_valid_path_fraction: 0.5
+
+# ============================================
+# Planning Group Configurations
+# ============================================
+# Specify which planners are available for each planning group
+
+manipulator:
+  planner_configs:
+    - RRTConnect # Default: fast and reliable
+    - RRTstar # For optimal paths
+    - RRT
+    - PRM
+    - PRMstar
+    - KPIECE
+    - LBKPIECE
+  # You can set a default planner for this group (optional)
+  # default_planner_config: RRTConnect

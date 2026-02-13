@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: ""
+    relative_path: /home/dmitri/so101_follower.urdf
+  srdf:
+    relative_path: config/so101_arm.srdf
+  package_settings:
+    author_name: Dmitri Manajev
+    author_email: dmitri@manajev.com
+    generated_timestamp: 1770391943
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
