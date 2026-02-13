@@ -62,7 +62,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            DeclareLaunchArgument("hardware_type", default_value="real"),  # real|mock_components|mujoco
+            DeclareLaunchArgument("hardware_type", default_value="real"),  # real|mock|mujoco
             DeclareLaunchArgument("namespace", default_value="follower"),
             follower_bringup,
             move_group,
