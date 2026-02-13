@@ -1,0 +1,44 @@
+# --- ROS 2 / colcon build artifacts ---
+build/
+install/
+log/
+
+# --- ament / colcon / rosdep local files ---
+.colcon/
+.ros/
+rosdep/
+rosinstall/
+.vscode/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# --- CMake / C++ ---
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+
+# --- IDEs / editors ---
+.idea/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Rerun (optional, if you generate local recordings/caches) ---
+*.rrd
+
+# --- Pixi ---
+.pixi/
+
+# --
+*keys.sh

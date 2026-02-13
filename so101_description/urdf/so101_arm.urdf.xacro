@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<robot name="so101_arm" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="variant" default="leader"/>          <!-- leader | follower -->
+  <xacro:arg name="mesh_dir" default="package://so101_description/meshes"/>
+  <xacro:arg name="add_transmissions" default="false"/>
+  <xacro:arg name="use_ros2_control" default="false"/>
+  <xacro:arg name="hardware_type" default="mock"/>
+  <xacro:arg name="usb_port" default="/dev/ttyUSB0"/>
+  <xacro:arg name="joint_config_file" default=""/>
+
+  <!-- Convert args to properties for use in ${} expressions -->
+  <xacro:property name="use_ros2_control" value="$(arg use_ros2_control)"/>
+  <xacro:property name="variant" value="$(arg variant)"/>
+
+  <xacro:include filename="$(find so101_description)/urdf/so101_macros.xacro"/>
+  <xacro:include filename="$(find so101_description)/urdf/so101_materials.xacro"/>
+  <xacro:include filename="$(find so101_description)/urdf/so101_arm_common.xacro"/>
+
+  <xacro:include filename="$(find so101_description)/urdf/end_effectors/so101_ee_common.xacro"/>
+  <xacro:include filename="$(find so101_description)/urdf/end_effectors/so101_ee_leader.xacro"/>
+  <xacro:include filename="$(find so101_description)/urdf/end_effectors/so101_ee_follower.xacro"/>
+
+  <xacro:include filename="$(find so101_description)/urdf/ros2_control/so101_ros2_control.xacro"/>
+
+
+  <xacro:so101_materials/>
+  <xacro:so101_arm_common
+    mesh_dir="$(arg mesh_dir)"
+    add_transmissions="$(arg add_transmissions)"/>
+
+
+  <xacro:if value="${variant == 'leader'}">
+    <xacro:so101_ee_leader
+      mesh_dir="$(arg mesh_dir)"
+      add_transmissions="$(arg add_transmissions)"/>
+  </xacro:if>
+
+  <xacro:if value="${variant == 'follower'}">
+    <xacro:so101_ee_follower
+      mesh_dir="$(arg mesh_dir)"
+      add_transmissions="$(arg add_transmissions)"/>
+  </xacro:if>
+
+  <xacro:if value="${use_ros2_control}">
+    <xacro:so101_ros2_control
+      variant="${variant}"
+      hardware_type="$(arg hardware_type)"
+      usb_port="$(arg usb_port)"
+      joint_config_file="$(arg joint_config_file)"
+      system_name="SO101_${variant}_SYSTEM"/>
+  </xacro:if>
+
+</robot>

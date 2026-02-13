@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated using onshape-to-robot -->
+<!-- Onshape document_id: 8f481cee516ba3c20e3a95ba -->
+<robot name="so101_follower">
+
+  <!-- Materials -->
+  <material name="3d_printed">
+    <color rgba="1.0 0.82 0.12 1.0"/>
+  </material>
+  <material name="sts3215">
+    <color rgba="0.1 0.1 0.1 1.0"/>
+  </material>
+
+  <!-- Link base -->
+  <link name="base_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.147"/>
+      <inertia ixx="0.000114686" ixy="-4.59787e-07" ixz="4.97151e-06" iyy="0.000136117" iyz="9.75275e-08" izz="0.000130364"/>
+    </inertial>
+    <!-- Part sts3215_03a_v1_5 -->
+    <visual>
+      <origin xyz="0.0125 -2.59846e-17 -0.0187" rpy="-1.7352e-15 4.18253e-17 3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+      <material name="sts3215"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0125 -2.59846e-17 -0.0187" rpy="-1.7352e-15 4.18253e-17 3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part waveshare_mounting_plate_so101_v2 -->
+    <visual>
+      <origin xyz="0.0698624 0.0001 -0.015" rpy="1.5708 -3.8633e-14 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/waveshare_mounting_plate_so101_v2.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0698624 0.0001 -0.015" rpy="1.5708 -3.8633e-14 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/waveshare_mounting_plate_so101_v2.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part base_motor_holder_so101_v1 -->
+    <visual>
+      <origin xyz="0.0452 -1.04955e-16 -0.0648" rpy="1.5708 1.61129e-15 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/base_motor_holder_so101_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0452 -1.04955e-16 -0.0648" rpy="1.5708 1.61129e-15 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/base_motor_holder_so101_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part base_so101_v2 -->
+    <visual>
+      <origin xyz="0.0452 -9.97509e-17 -0.0648" rpy="1.5708 1.7352e-15 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/base_so101_v2.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0452 -9.97509e-17 -0.0648" rpy="1.5708 1.7352e-15 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/base_so101_v2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Link shoulder -->
+  <link name="shoulder_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.100006"/>
+      <inertia ixx="8.3759e-05" ixy="7.55525e-08" ixz="-1.16342e-06" iyy="8.10403e-05" iyz="1.54663e-07" izz="2.39783e-05"/>
+    </inertial>
+    <!-- Part sts3215_03a_v1_4 -->
+    <visual>
+      <origin xyz="0.0125 1.38778e-16 -0.0187" rpy="-9.23216e-31 3.33294e-29 -3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+      <material name="sts3215"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0125 1.38778e-16 -0.0187" rpy="-9.23216e-31 3.33294e-29 -3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part motor_holder_so101_base_v1 -->
+    <visual>
+      <origin xyz="0.0700499 0.0372 -0.0181" rpy="-3.20577e-15 9.4369e-15 1.16575e-14"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/motor_holder_so101_base_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0700499 0.0372 -0.0181" rpy="-3.20577e-15 9.4369e-15 1.16575e-14"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/motor_holder_so101_base_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part rotation_pitch_so101_v1 -->
+    <visual>
+      <origin xyz="0.1006 -0.0426 -0.0183" rpy="3.14159 3.46945e-16 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/rotation_pitch_so101_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.1006 -0.0426 -0.0183" rpy="3.14159 3.46945e-16 -1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/rotation_pitch_so101_v1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Link upper_arm -->
+  <link name="upper_arm_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.103"/>
+      <inertia ixx="4.08002e-05" ixy="-1.97819e-05" ixz="-4.03016e-08" iyy="0.000147318" iyz="8.97326e-09" izz="0.000142487"/>
+    </inertial>
+    <!-- Part sts3215_03a_v1_3 -->
+    <visual>
+      <origin xyz="0.0125 2.77556e-17 -0.0187" rpy="2.16937e-29 -2.87611e-30 3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+      <material name="sts3215"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0125 2.77556e-17 -0.0187" rpy="2.16937e-29 -2.87611e-30 3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part upper_arm_so101_v1 -->
+    <visual>
+      <origin xyz="0.04 0.047485 -0.0182" rpy="2.87611e-30 -1.02552e-29 1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/upper_arm_so101_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.04 0.047485 -0.0182" rpy="2.87611e-30 -1.02552e-29 1.5708"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/upper_arm_so101_v1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Link lower_arm -->
+  <link name="lower_arm_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.104"/>
+      <inertia ixx="2.87438e-05" ixy="7.41152e-06" ixz="1.26409e-06" iyy="0.000159844" iyz="-4.90188e-08" izz="0.00014529"/>
+    </inertial>
+    <!-- Part under_arm_so101_v1 -->
+    <visual>
+      <origin xyz="0.162084 -7.77677e-05 0.19717" rpy="-1.5708 -1.16157e-14 -3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/under_arm_so101_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.162084 -7.77677e-05 0.19717" rpy="-1.5708 -1.16157e-14 -3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/under_arm_so101_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part motor_holder_so101_wrist_v1 -->
+    <visual>
+      <origin xyz="0.162084 2.22323e-05 0.19717" rpy="-1.5708 -1.16157e-14 -3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/motor_holder_so101_wrist_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.162084 2.22323e-05 0.19717" rpy="-1.5708 -1.16157e-14 -3.14159"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/motor_holder_so101_wrist_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part sts3215_03a_v1 -->
+    <visual>
+      <origin xyz="0.219634 0.000422232 0.23437" rpy="1.5708 1.16157e-14 4.996e-15"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+      <material name="sts3215"/>
+    </visual>
+    <collision>
+      <origin xyz="0.219634 0.000422232 0.23437" rpy="1.5708 1.16157e-14 4.996e-15"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Link wrist -->
+  <link name="wrist_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.079"/>
+      <inertia ixx="3.68263e-05" ixy="1.7893e-08" ixz="-5.28128e-08" iyy="2.5391e-05" iyz="3.6412e-06" izz="2.1e-05"/>
+    </inertial>
+    <!-- Part wrist_roll_pitch_so101_v2 -->
+    <visual>
+      <origin xyz="0.0013672 -0.0290022 0.0181" rpy="-1.5708 -1.5708 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/wrist_roll_pitch_so101_v2.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0013672 -0.0290022 0.0181" rpy="-1.5708 -1.5708 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/wrist_roll_pitch_so101_v2.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part sts3215_03a_no_horn_v1 -->
+    <visual>
+      <origin xyz="0.0013672 -0.0434022 0.0306" rpy="1.5708 1.5708 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_no_horn_v1.stl"/>
+      </geometry>
+      <material name="sts3215"/>
+    </visual>
+    <collision>
+      <origin xyz="0.0013672 -0.0434022 0.0306" rpy="1.5708 1.5708 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_no_horn_v1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Link gripper -->
+  <link name="gripper_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.087"/>
+      <inertia ixx="2.75087e-05" ixy="-3.35241e-07" ixz="-5.7352e-06" iyy="4.33657e-05" iyz="-5.17847e-08" izz="3.45059e-05"/>
+    </inertial>
+    <!-- Part wrist_roll_follower_so101_v1 -->
+    <visual>
+      <origin xyz="-0.00665289 0.00415995 0.000949706" rpy="3.14159 -5.55112e-17 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/wrist_roll_follower_so101_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="-0.00665289 0.00415995 0.000949706" rpy="3.14159 -5.55112e-17 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/wrist_roll_follower_so101_v1.stl"/>
+      </geometry>
+    </collision>
+    <!-- Part sts3215_03a_v1_2 -->
+    <visual>
+      <origin xyz="0.00104711 0.00447817 -0.0234" rpy="-1.5708 -5.55111e-17 6.93889e-17"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+      <material name="sts3215"/>
+    </visual>
+    <collision>
+      <origin xyz="0.00104711 0.00447817 -0.0234" rpy="-1.5708 -5.55111e-17 6.93889e-17"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/sts3215_03a_v1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Gripper frame (dummy link + fixed joint) -->
+  <link name="gripper_frame_link">
+    <origin xyz="0 0 0" rpy="0 -0 0"/>
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="1e-9"/>
+      <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+    </inertial>
+  </link>
+
+  <joint name="gripper_frame_joint" type="fixed">
+    <origin xyz="-0.0145529 0.00416005 -0.0981274" rpy="-1.5708 -1.88934e-31 -1.5708"/>
+    <parent link="gripper_link"/>
+    <child link="gripper_frame_link"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+
+  <!-- Link moving_jaw_so101_v1 -->
+  <link name="moving_jaw_so101_v1_link">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.012"/>
+      <inertia ixx="6.61427e-06" ixy="-3.19807e-07" ixz="-5.90717e-09" iyy="1.89032e-06" iyz="-1.09945e-07" izz="5.28738e-06"/>
+    </inertial>
+    <!-- Part moving_jaw_so101_v1 -->
+    <visual>
+      <origin xyz="0.000944164 0.000490603 0.0189" rpy="9.53145e-17 -0 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/moving_jaw_so101_v1.stl"/>
+      </geometry>
+      <material name="3d_printed"/>
+    </visual>
+    <collision>
+      <origin xyz="0.000944164 0.000490603 0.0189" rpy="9.53145e-17 -0 0"/>
+      <geometry>
+        <mesh filename="package://so101_description/onshape/assets/moving_jaw_so101_v1.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Joint from gripper to moving_jaw_so101_v1 -->
+  <joint name="gripper" type="revolute">
+    <origin xyz="0.0135471 0.0231782 -0.0234" rpy="1.5708 -5.55107e-17 2.01228e-16"/>
+    <parent link="gripper_link"/>
+    <child link="moving_jaw_so101_v1_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-0.174533" upper="1.74533"/>
+  </joint>
+
+  <transmission name="gripper_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="gripper">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor6">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- Joint from wrist to gripper -->
+  <joint name="wrist_roll" type="revolute">
+    <origin xyz="0.0013672 -0.0621022 0.0181" rpy="1.5708 2.72806e-17 -3.14159"/>
+    <parent link="wrist_link"/>
+    <child link="gripper_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-2.74385" upper="2.84121"/>
+  </joint>
+
+  <transmission name="wrist_roll_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wrist_roll">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor5">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- Joint from lower_arm to wrist -->
+  <joint name="wrist_flex" type="revolute">
+    <origin xyz="0.232134 -0.0182778 0.23437" rpy="-1.5708 1.5708 0"/>
+    <parent link="lower_arm_link"/>
+    <child link="wrist_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-1.65806" upper="1.65806"/>
+  </joint>
+
+  <transmission name="wrist_flex_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="wrist_flex">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor4">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- Joint from upper_arm to lower_arm -->
+  <joint name="elbow_flex" type="revolute">
+    <origin xyz="0.0959629 -0.0182778 0.22968" rpy="-1.5708 -1.16157e-14 -3.14159"/>
+    <parent link="upper_arm_link"/>
+    <child link="lower_arm_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-1.69" upper="1.69"/>
+  </joint>
+
+  <transmission name="elbow_flex_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="elbow_flex">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor3">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- Joint from shoulder to upper_arm -->
+  <joint name="shoulder_lift" type="revolute">
+    <origin xyz="0.0274904 0.113842 1.04083e-17" rpy="2.87611e-30 -1.02552e-29 1.5708"/>
+    <parent link="shoulder_link"/>
+    <child link="upper_arm_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-1.74533" upper="1.74533"/>
+  </joint>
+
+  <transmission name="shoulder_lift_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="shoulder_lift">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor2">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- Joint from base to shoulder -->
+  <joint name="shoulder_pan" type="revolute">
+    <origin xyz="0.0542 -0.0303992 -0.0182778" rpy="1.5708 3.46945e-16 -1.5708"/>
+    <parent link="base_link"/>
+    <child link="shoulder_link"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="10" velocity="10" lower="-1.91986" upper="1.91986"/>
+  </joint>
+
+  <transmission name="shoulder_pan_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="shoulder_pan">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="motor1">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+</robot>

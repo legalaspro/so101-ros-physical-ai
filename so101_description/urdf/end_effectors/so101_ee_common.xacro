@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Shared: gripper_frame dummy link -->
+  <xacro:macro name="so101_gripper_frame">
+    <link name="gripper_frame_link">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="1e-9"/>
+        <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+      </inertial>
+    </link>
+
+    <joint name="gripper_frame_joint" type="fixed">
+      <origin xyz="-0.0079 -0.000218121 -0.0981274" rpy="0 3.14159 0"/>
+      <parent link="gripper_link"/>
+      <child link="gripper_frame_link"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Shared: wrist_roll joint (+ optional transmission) -->
+  <xacro:macro name="so101_wrist_roll_joint"
+               params="add_transmission:='false'">
+    <joint name="wrist_roll" type="revolute">
+      <origin xyz="5.55112e-17 -0.0611 0.0181" rpy="1.5708 0.0486795 3.14159"/>
+      <parent link="wrist_link"/>
+      <child link="gripper_link"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="10" velocity="10" lower="-2.74385" upper="2.84121"/>
+    </joint>
+
+    <xacro:if value="${add_transmission}">
+      <xacro:simple_transmission
+        name="wrist_roll_trans"
+        joint="wrist_roll"
+        actuator="motor5"/>
+    </xacro:if>
+  </xacro:macro>
+
+</robot>

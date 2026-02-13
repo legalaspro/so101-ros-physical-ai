@@ -1,0 +1,14 @@
+{
+    "configuration": "default",
+    "documentId": "55f95d3f6c5c17636286b414",
+    "documentMicroversion": "df20d7ab44ef5e8b61356060",
+    "documentVersion": "71c86be99086868484c661c6",
+    "elementId": "f064e8b9e7b58ec67fecec8f",
+    "fullConfiguration": "default",
+    "id": "MX9qeoWeEnpsxAOMO",
+    "isStandardContent": false,
+    "name": "Wrist_Roll_SO101 v1 <1>",
+    "partId": "JFD",
+    "suppressed": false,
+    "type": "Part"
+}

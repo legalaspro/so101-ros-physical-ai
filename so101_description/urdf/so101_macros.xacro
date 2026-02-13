@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- mesh visual + collision (same origin/mesh) -->
+  <xacro:macro name="mesh_vc" params="filename xyz rpy material:=''">
+    <visual>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <geometry><mesh filename="${filename}"/></geometry>
+      <xacro:if value="${material != ''}">
+        <material name="${material}"/>
+      </xacro:if>
+    </visual>
+    <collision>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <geometry><mesh filename="${filename}"/></geometry>
+    </collision>
+  </xacro:macro>
+
+  <xacro:macro name="inertial_block" params="xyz rpy mass ixx ixy ixz iyy iyz izz">
+    <inertial>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <mass value="${mass}"/>
+      <inertia ixx="${ixx}" ixy="${ixy}" ixz="${ixz}" iyy="${iyy}" iyz="${iyz}" izz="${izz}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="simple_transmission" params="name joint actuator hw_if:='hardware_interface/PositionJointInterface' reduction:='1'">
+    <transmission name="${name}">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${joint}">
+        <hardwareInterface>${hw_if}</hardwareInterface>
+      </joint>
+      <actuator name="${actuator}">
+        <hardwareInterface>${hw_if}</hardwareInterface>
+        <mechanicalReduction>${reduction}</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </xacro:macro>
+
+</robot>

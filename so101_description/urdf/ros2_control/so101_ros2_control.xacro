@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:macro name="so101_control_joint" params="variant joint">
+        <joint name="${joint}">
+            <!-- follower can be commanded; leader is state-only -->
+            <xacro:if value="${variant == 'follower'}">
+                <command_interface name="position"/>
+            </xacro:if>
+
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+    </xacro:macro>
+
+     <xacro:macro name="so101_ros2_control" params="
+        variant:='follower'          
+        hardware_type:='mock'            
+        usb_port:='/dev/ttyUSB0'
+        joint_config_file:=''
+        system_name:='SO101_SYSTEM'">
+
+        <ros2_control name="${system_name}" type="system">
+              <hardware>
+                <xacro:if value="${hardware_type == 'mock'}">
+                    <plugin>mock_components/GenericSystem</plugin>
+                </xacro:if>
+
+                <xacro:if value="${hardware_type == 'real'}">
+                    <!-- Require a joint_config_file for real hardware -->
+                    <xacro:unless value="${joint_config_file != ''}">
+                        <xacro:error message="so101_ros2_control: joint_config_file is REQUIRED when hardware_type=='real' (pass joint_config_file:=/path/to/*.yaml)"/>
+                    </xacro:unless>
+
+                    <plugin>feetech_ros2_driver/FeetechHardwareInterface</plugin>
+                    <param name="usb_port">${usb_port}</param>
+                    <param name="joint_config_file">${joint_config_file}</param>
+                </xacro:if>
+            </hardware>
+            
+            <!-- arm joints -->
+            <xacro:so101_control_joint  variant="${variant}" joint="shoulder_pan"/>
+            <xacro:so101_control_joint  variant="${variant}" joint="shoulder_lift"/>
+            <xacro:so101_control_joint  variant="${variant}" joint="elbow_flex"/>
+            <xacro:so101_control_joint  variant="${variant}" joint="wrist_flex"/>
+            <xacro:so101_control_joint  variant="${variant}" joint="wrist_roll"/>
+            <xacro:so101_control_joint  variant="${variant}" joint="gripper"/>
+
+        </ros2_control>
+    </xacro:macro>
+</robot>

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="so101_ee_leader"
+               params="mesh_dir:='package://so101_description/meshes' add_transmissions:='false'">
+
+    <link name="gripper_link">
+      <xacro:inertial_block
+        xyz="0.000213627 0.000245138 -0.025187" rpy="0 0 0"
+        mass="0.087"
+        ixx="2.75087e-05" ixy="-3.35241e-07" ixz="-5.7352e-06"
+        iyy="4.33657e-05" iyz="-5.17847e-08" izz="3.45059e-05"/>
+
+      <xacro:mesh_vc filename="${mesh_dir}/sts3215_03a_v1.stl"
+        xyz="0.0077 0.0001 -0.0234" rpy="-1.5708 -5.19179e-17 -1.66533e-16" material="sts3215"/>
+
+      <xacro:mesh_vc filename="${mesh_dir}/wrist_roll_so101_v1.stl"
+        xyz="8.32667e-17 -0.000218214 0.000949706" rpy="-3.14159 -5.55112e-17 0" material="3d_printed"/>
+
+      <xacro:mesh_vc filename="${mesh_dir}/handle_so101_v1.stl"
+        xyz="8.32667e-17 -0.000218214 0.000949706" rpy="-3.14159 -5.55112e-17 0" material="3d_printed"/>
+    </link>
+
+    <xacro:so101_gripper_frame />
+
+    <link name="trigger_so101_v1_link">
+      <xacro:inertial_block
+        xyz="-0.00157495 -0.0300244 0.0192755" rpy="0 0 0"
+        mass="0.012"
+        ixx="6.61427e-06" ixy="-3.19807e-07" ixz="-5.90717e-09"
+        iyy="1.89032e-06" iyz="-1.09945e-07" izz="5.28738e-06"/>
+
+      <xacro:mesh_vc filename="${mesh_dir}/trigger_so101_v1.stl"
+        xyz="-5.55112e-17 -5.55112e-17 0.0" rpy="9.53145e-17 3.14159 -0.7" material="3d_printed"/>
+    </link>
+
+    <joint name="gripper" type="revolute">
+      <origin xyz="0.0202 0.0188 -0.0234" rpy="1.5708 -5.24284e-08 -1.41553e-15"/>
+      <parent link="gripper_link"/>
+      <child link="trigger_so101_v1_link"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="10" velocity="10" lower="-0.174533" upper="1.74533"/>
+    </joint>
+
+    <xacro:so101_wrist_roll_joint
+      add_transmission="${add_transmissions}"/>
+
+  </xacro:macro>
+
+</robot>

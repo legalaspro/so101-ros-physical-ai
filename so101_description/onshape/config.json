@@ -1,0 +1,7 @@
+{
+    "documentId": "8f481cee516ba3c20e3a95ba",
+    "outputFormat": "urdf",
+    "packageName": "so101_description/onshape",
+    "robotName": "so101_leader",
+    "assemblyName": "so101-leader"
+}
