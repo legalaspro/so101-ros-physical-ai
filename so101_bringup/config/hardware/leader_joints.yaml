@@ -1,0 +1,48 @@
+joints:
+  shoulder_pan:
+    id: 1
+    homing_offset: -732
+    range_min: 821
+    range_max: 3267
+    return_delay_time: 0    
+    acceleration: 254
+
+  shoulder_lift:
+    id: 2
+    homing_offset: -1916
+    range_min: 852
+    range_max: 3200
+    return_delay_time: 0   
+    acceleration: 254 
+  
+  elbow_flex:
+    id: 3
+    homing_offset: 685
+    range_min: 890
+    range_max: 3102
+    return_delay_time: 0   
+    acceleration: 254
+
+  wrist_flex:
+    id: 4
+    homing_offset: -1557
+    range_min: 872
+    range_max: 3165
+    return_delay_time: 0   
+    acceleration: 254
+
+  wrist_roll:
+    id: 5
+    homing_offset: -1370
+    range_min: 221
+    range_max: 4035
+    return_delay_time: 0   
+    acceleration: 254
+  
+  gripper:
+    id: 6
+    homing_offset: 1102
+    range_min: 2011
+    range_max: 3212
+    return_delay_time: 0   
+    acceleration: 254

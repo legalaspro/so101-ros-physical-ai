@@ -1,0 +1,35 @@
+/**:
+  ros__parameters:
+    framerate: 30.0
+    io_method: "mmap"
+    pixel_format: "mjpeg2rgb"
+    av_device_format: "YUV422P"
+    image_width: 640
+    image_height: 480
+
+    # Let cameras use their own defaults
+    brightness: -1
+    contrast: -1
+    saturation: -1
+    sharpness: -1
+    gain: -1
+
+    # Enable auto adjustments
+    auto_white_balance: true
+    autoexposure: true
+
+    # usually better for datasets (prevents hunting)
+    autofocus: false
+    focus: -1
+
+/follower/cam_wrist:
+  ros__parameters:
+    video_device: "/dev/cam_wrist"
+    frame_id: "cam_wrist"
+    camera_name: "cam_wrist"
+
+/static_camera/cam_overhead:
+  ros__parameters:
+    video_device: "/dev/cam_overhead"
+    frame_id: "cam_overhead"
+    camera_name: "cam_overhead"
