@@ -51,11 +51,6 @@ class Episode:
 # ==============================================================================
 
 def build_so101_blueprint() -> rrb.Blueprint:
-    """
-    Constructs the specific layout requested:
-    Top: Follower Image | Static Camera Image
-    Bottom: Joint States (Graph) | Controller Commands (Graph)
-    """
     return rrb.Blueprint(
         rrb.Vertical(
             # Top Row: Images
@@ -180,9 +175,6 @@ def stream_episode(
     def loader_worker():
         try:
             for mcap_file in mcaps:
-                # log_file_from_path automatically parses MCAP and ROS2 messages
-                # provided the necessary libraries (mcap_ros2_support) are available
-                # or standard Rerun ingestion works for the file.
                 rr.log_file_from_path(str(mcap_file), recording=rec)
         except Exception as e:
             print(f"Error loading MCAP {mcap_file}: {e}")
