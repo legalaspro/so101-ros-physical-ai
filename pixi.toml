@@ -7,6 +7,8 @@ version = "0.1.0"
 
 [dependencies]
 python = "3.12.*"
+# TODO: bump to >=0.30 once https://github.com/rerun-io/rerun/pull/12607 lands
+#       (adds native Float64MultiArray / Joy MCAP parsing — needed for action logs in mcap viewer)
 rerun-sdk = ">=0.29.1,<0.30"
 pyyaml = ">=6.0.3,<7"
 numpy = ">=2.4.2,<3"
