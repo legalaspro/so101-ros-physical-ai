@@ -10,6 +10,7 @@ python = "3.12.*"
 rerun-sdk = ">=0.29.1,<0.30"
 pyyaml = ">=6.0.3,<7"
 numpy = ">=2.4.2,<3"
+gradio = ">=6.5.1,<7"
 
 [tasks]
 # Run the bridge in a ROS-aware shell:
@@ -18,7 +19,12 @@ numpy = ">=2.4.2,<3"
 # - runs with pixi's python (so rerun is available)
 # - forwards all extra args to the Python script
 bridge = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_ros2_to_rerun.py \"$@\"' -- " }
+replay = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_episode_browser.py \"$@\"' -- " }
+
 
 # Launch the native Rerun viewer (connect the bridge with --connect)
 viewer = { cmd = "python -m rerun" }
+
+[pypi-dependencies]
+gradio-rerun = ">=0.29.1, <0.30"
 
