@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SO-101 Episode Browser — Rerun + ROS2 bag playback + Gradio UI."""
+"""SO-101 Episode Browser — Rerun RecordingStream + ROS2 bag playback + Gradio UI."""
 
 from __future__ import annotations
 
@@ -9,26 +9,45 @@ import signal
 import subprocess
 import sys
 import threading
+import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Iterator
 
 import gradio as gr
 import numpy as np
 import rclpy
+import rerun as rr
+from gradio_rerun import Rerun
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from rclpy.parameter import Parameter
-from rclpy.callback_groups import ReentrantCallbackGroup
-from rclpy.qos import qos_profile_sensor_data, QoSProfile
+from rclpy.qos import QoSProfile, qos_profile_sensor_data
 from sensor_msgs.msg import CompressedImage, Image, JointState
 from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory
-import rerun as rr
-from rclpy.time import Time
+
+# ---------------------------------------------------------------------------
+# Constants & Styling
+# ---------------------------------------------------------------------------
+
+APP_ID = "so101_episode_browser"
+
+CSS = """
+#episode_list_wrap {
+  height: 750px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color-primary);
+  border-radius: 8px;
+  padding: 8px;
+}
+"""
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def media_type_from_compressed_format(fmt: str) -> str | None:
     f = (fmt or "").lower()
@@ -44,17 +63,14 @@ def rgb8_to_numpy(img: Image) -> np.ndarray:
 
 
 def stamp_to_datetime64(stamp) -> np.datetime64:
-    t = Time.from_msg(stamp)
-    return np.datetime64(t.nanoseconds, "ns")
+    return np.datetime64(stamp.sec * 1_000_000_000 + stamp.nanosec, "ns")
 
-
-def time_to_datetime64(t: Time) -> np.datetime64:
-    return np.datetime64(t.nanoseconds, "ns")
 
 
 # ---------------------------------------------------------------------------
 # Dataclasses
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Topics:
@@ -79,6 +95,7 @@ DEFAULT_CMD_JOINTS: list[str] = [
 # Rerun blueprint
 # ---------------------------------------------------------------------------
 
+
 def make_blueprint() -> rr.blueprint.Blueprint:
     return rr.blueprint.Blueprint(
         rr.blueprint.Horizontal(
@@ -95,26 +112,36 @@ def make_blueprint() -> rr.blueprint.Blueprint:
     )
 
 
-blueprint = make_blueprint()
-GRPC_URI: str = ""
-
-
 # ---------------------------------------------------------------------------
-# ROS2 Node — So101Ros2ToRerun
+# ROS2 Node — So101Ros2ToRerun (stream-aware)
 # ---------------------------------------------------------------------------
+
 
 class So101Ros2ToRerun(Node):
-    """Subscribe to SO-101 topics and log data to Rerun."""
+    """Subscribe to SO-101 topics and log data to a swappable RecordingStream."""
 
     def __init__(self, topics: Topics, cmd_joint_order: list[str]) -> None:
         super().__init__("so101_ros2_to_rerun")
         self._cmd_joint_order = list(cmd_joint_order)
+
+        # -- Swappable RecordingStream --
+        self._rec: rr.RecordingStream | None = None
+
+        # Timestamp reference for unstamped messages (Float64MultiArray).
+        # Stamped callbacks write here; the action callback reads it.
+        # Protected by _time_lock for thread-safety.
+        self._time_lock = threading.Lock()
+        self._last_ros_time: np.datetime64 | None = None
+        self._last_action_time: np.datetime64 | None = None
+
+        # -- Callback groups --
         self._cg_img_wrist = ReentrantCallbackGroup()
         self._cg_img_over = ReentrantCallbackGroup()
         self._cg_joints = ReentrantCallbackGroup()
         self._cg_cmd = ReentrantCallbackGroup()
         self._cg_traj = ReentrantCallbackGroup()
 
+        # -- Subscriptions --
         if self._is_compressed(topics.wrist):
             self.create_subscription(
                 CompressedImage, topics.wrist, self._on_wrist_img,
@@ -155,61 +182,126 @@ class So101Ros2ToRerun(Node):
                 qos_profile_sensor_data, callback_group=self._cg_traj,
             )
 
-        self.get_logger().info("Rerun bridge started.")
+        self.get_logger().info("Rerun bridge started (stream-aware).")
+
+    # -- public API --
+
+    def set_recording(self, rec: rr.RecordingStream | None) -> None:
+        """Hot-swap the target RecordingStream."""
+        self._rec = rec
+        with self._time_lock:
+            self._last_ros_time = None
+            self._last_action_time = None
+
+    def _get_rec(self) -> rr.RecordingStream | None:
+        return self._rec
 
     # -- helpers --
+
     @staticmethod
     def _is_compressed(topic_name: str) -> bool:
         return "compressed" in topic_name.lower()
 
-    @staticmethod
-    def _stamp_secs(stamp) -> float:
-        return stamp.sec + stamp.nanosec * 1e-9
+    # -- timestamp helpers --
+
+    def _next_action_time(self) -> np.datetime64 | None:
+        """Return a strictly-increasing timestamp for unstamped action msgs.
+
+        Derives from the last stamped reference time. Tracks its own
+        monotonic counter so consecutive actions never share a timestamp,
+        even if the stamped reference hasn't changed.
+
+        Returns None when no stamped reference exists yet.
+        """
+        with self._time_lock:
+            if self._last_ros_time is None:
+                return None
+            ts = self._last_ros_time
+            prev = self._last_action_time
+            if prev is not None and ts <= prev:
+                ts = prev + np.timedelta64(1, "ns")
+            self._last_action_time = ts
+            return ts
 
     # -- image callbacks --
+
     def _on_wrist_img(self, msg: CompressedImage) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec = self._get_rec()
+        if rec is None:
+            return
         mt = media_type_from_compressed_format(msg.format) or "image/jpeg"
-        rr.log("cameras/wrist", rr.EncodedImage(contents=bytes(msg.data), media_type=mt))
+        rec.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec.log("cameras/wrist", rr.EncodedImage(contents=bytes(msg.data), media_type=mt))
 
     def _on_wrist_img_raw(self, msg: Image) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
-        rr.log("cameras/wrist", rr.Image(rgb8_to_numpy(msg), color_model="RGB"))
+        rec = self._get_rec()
+        if rec is None:
+            return
+        rec.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec.log("cameras/wrist", rr.Image(rgb8_to_numpy(msg), color_model="RGB"))
 
     def _on_overhead_img(self, msg: CompressedImage) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec = self._get_rec()
+        if rec is None:
+            return
         mt = media_type_from_compressed_format(msg.format) or "image/jpeg"
-        rr.log("cameras/overhead", rr.EncodedImage(contents=bytes(msg.data), media_type=mt))
+        rec.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec.log("cameras/overhead", rr.EncodedImage(contents=bytes(msg.data), media_type=mt))
 
     def _on_overhead_img_raw(self, msg: Image) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
-        rr.log("cameras/overhead", rr.Image(rgb8_to_numpy(msg), color_model="RGB"))
+        rec = self._get_rec()
+        if rec is None:
+            return
+        rec.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec.log("cameras/overhead", rr.Image(rgb8_to_numpy(msg), color_model="RGB"))
 
     # -- joint state callback --
+
     def _on_joint_states(self, msg: JointState) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec = self._get_rec()
+        if rec is None:
+            return
+        ts = stamp_to_datetime64(msg.header.stamp)
+        # Cache as the reference clock for unstamped action messages.
+        with self._time_lock:
+            self._last_ros_time = ts
+        rec.set_time("ros_time", timestamp=ts)
         for name, pos in zip(msg.name, msg.position):
-            rr.log(f"state/position/{name}", rr.Scalars(float(pos)))
+            rec.log(f"state/position/{name}", rr.Scalars(float(pos)))
 
     # -- forward commands callback --
+
     def _on_forward_commands(self, msg: Float64MultiArray) -> None:
-        now = self.get_clock().now()
-        rr.set_time("ros_time", timestamp=time_to_datetime64(now))
+        rec = self._get_rec()
+        if rec is None:
+            return
+        # Float64MultiArray has no header — derive a monotonic timestamp
+        # from the last known stamped time.
+        ts = self._next_action_time()
+        if ts is None:
+            return  # no stamped reference yet, skip
+        rec.set_time("ros_time", timestamp=ts)
         for name, val in zip(self._cmd_joint_order, msg.data):
-            rr.log(f"action/position/{name}", rr.Scalars(float(val)))
+            rec.log(f"action/position/{name}", rr.Scalars(float(val)))
 
     # -- joint trajectory callback --
+
     def _on_joint_trajectory(self, msg: JointTrajectory) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        rec = self._get_rec()
+        if rec is None:
+            return
+        rec.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
         if msg.points:
             pt = msg.points[0]
             for name, pos in zip(msg.joint_names, pt.positions):
-                rr.log(f"action/position/{name}", rr.Scalars(float(pos)))
+                rec.log(f"action/position/{name}", rr.Scalars(float(pos)))
+
 
 
 # ---------------------------------------------------------------------------
 # Episode indexing
 # ---------------------------------------------------------------------------
+
 
 def index_episodes(root: Path) -> list[tuple[str, str]]:
     """Find all *.mcap files under *root*, return [(label, path_str), ...]."""
@@ -248,14 +340,12 @@ def stop_playback() -> None:
 def start_playback(
     target: str,
     rate: float = 1.0,
-    clock_hz: int = 100,
     loop: bool = False,
     read_ahead: int = 12000,
 ) -> subprocess.Popen:
     global BAG_PROC
     stop_playback()
 
-    # Determine if target is a file or directory
     target_path = Path(target)
     if target_path.is_file():
         bag_dir = str(target_path.parent)
@@ -266,7 +356,6 @@ def start_playback(
         "ros2", "bag", "play",
         "-s", "mcap",
         bag_dir,
-        "--clock", str(int(clock_hz)),
         "--rate", str(float(rate)),
         "--read-ahead-queue-size", str(int(read_ahead)),
         "--disable-keyboard-controls",
@@ -280,39 +369,90 @@ def start_playback(
 
 
 # ---------------------------------------------------------------------------
-# Rerun clear / reset
+# Streaming logic (mirrors MCAP viewer pattern)
 # ---------------------------------------------------------------------------
 
-def clear_and_reset() -> None:
-    """Clear all logged data and re-send the blueprint."""
-    rr.log("/", rr.Clear(recursive=True))
-    rr.send_blueprint(blueprint)
+
+def stream_episode(
+    episode_label: str,
+    episodes_state: dict[str, str],
+    node: So101Ros2ToRerun,
+    current_recording_id: str,
+) -> Iterator[tuple[Any, Any, str]]:
+    """Generator that creates a new RecordingStream per episode, starts bag
+    playback, and yields binary chunks to the Gradio Rerun component."""
+
+    if not episode_label:
+        yield gr.skip(), "⚠️ No episode selected.", current_recording_id
+        return
+
+    target = episodes_state.get(episode_label, "")
+    if not target:
+        yield gr.skip(), f"⚠️ Episode not found: {episode_label}", current_recording_id
+        return
+
+    # -- Create a fresh RecordingStream --
+    new_recording_id = str(uuid.uuid4())
+    rec = rr.RecordingStream(application_id=APP_ID, recording_id=new_recording_id)
+    stream = rec.binary_stream()
+
+    # Send blueprint on this stream
+    rec.send_blueprint(make_blueprint())
+
+    # Hot-swap the recording on the ROS2 node
+    node.set_recording(rec)
+
+    # Start bag playback (publishes to ROS2 topics → node callbacks → rec)
+    stop_playback()
+    proc = start_playback(target, rate=1.0, loop=False, read_ahead=12000)
+
+    yield gr.skip(), f"▶️ Loading `{episode_label}`...", new_recording_id
+
+    try:
+        while proc.poll() is None:
+            chunk = stream.read()
+            if chunk:
+                yield chunk, gr.skip(), new_recording_id
+            else:
+                time.sleep(0.01)
+
+        # Flush remaining data after playback ends
+        while True:
+            chunk = stream.read()
+            if not chunk:
+                break
+            yield chunk, gr.skip(), new_recording_id
+
+        yield gr.skip(), f"✅ `{episode_label}` complete", new_recording_id
+
+    except GeneratorExit:
+        stop_playback()
+    finally:
+        node.set_recording(None)
+        rr.disconnect(recording=rec)
 
 
 # ---------------------------------------------------------------------------
 # Gradio UI builder
 # ---------------------------------------------------------------------------
 
+
 def build_ui(
     episodes: list[tuple[str, str]],
-    viewer_url: str,
+    node: So101Ros2ToRerun,
 ) -> gr.Blocks:
-    """Build the Gradio Blocks interface."""
+    """Build the Gradio Blocks interface with embedded Rerun streaming viewer."""
 
     episode_labels = [label for label, _ in episodes]
     episode_map = {label: path for label, path in episodes}
 
-    def on_play(episode_label: str) -> str:
-        if not episode_label:
-            return "⚠️ No episode selected."
-        target = episode_map.get(episode_label, "")
-        if not target:
-            return f"⚠️ Episode not found: {episode_label}"
-        clear_and_reset()
-        start_playback(target, rate=1.0, clock_hz=100, loop=False, read_ahead=12000)
-        return f"▶️ Playing: {episode_label}"
+    with gr.Blocks(title="SO-101 Episode Browser", theme=gr.themes.Soft(), css=CSS) as demo:
 
-    with gr.Blocks(title="SO-101 Episode Browser", theme=gr.themes.Soft()) as demo:
+        # --- State ---
+        episodes_state = gr.State(episode_map)
+        recording_id = gr.State("")
+
+        # --- Layout ---
         gr.Markdown("# 🤖 SO-101 Episode Browser")
 
         with gr.Row():
@@ -326,18 +466,28 @@ def build_ui(
 
                 status_md = gr.Markdown("Ready.")
 
-            # -- Right column: Rerun viewer --
+            # -- Right column: Rerun streaming viewer --
             with gr.Column(scale=3):
-                gr.HTML(
-                    f'<iframe src="{viewer_url}" '
-                    f'style="width:100%;height:80vh;border:none;"></iframe>'
+                viewer = Rerun(
+                    streaming=True,
+                    height=800,
+                    panel_states={
+                        "blueprint": "hidden",
+                        "selection": "hidden",
+                        "time": "collapsed",
+                    },
                 )
 
         # -- Events --
+        # We need to pass the node to stream_episode; wrap in a closure
+        def _stream(episode_label, ep_state, rec_id):
+            yield from stream_episode(episode_label, ep_state, node, rec_id)
+
         episode_radio.change(
-            fn=on_play,
-            inputs=[episode_radio],
-            outputs=[status_md],
+            fn=_stream,
+            inputs=[episode_radio, episodes_state, recording_id],
+            outputs=[viewer, status_md, recording_id],
+            concurrency_limit=1,
         )
 
     return demo
@@ -347,9 +497,10 @@ def build_ui(
 # CLI argument parser
 # ---------------------------------------------------------------------------
 
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="SO-101 Episode Browser — Rerun + ROS2 bag + Gradio",
+        description="SO-101 Episode Browser — Rerun RecordingStream + ROS2 bag + Gradio",
     )
     p.add_argument(
         "--episodes_root", type=str, required=True,
@@ -381,7 +532,7 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_CMD_JOINTS,
         help="Joint names for forward commands (order matters)",
     )
-    p.add_argument("--server_name", type=str, default="127.0.0.1")
+    p.add_argument("--server_name", type=str, default="0.0.0.0")
     p.add_argument("--server_port", type=int, default=7860)
     return p.parse_args()
 
@@ -389,6 +540,7 @@ def parse_args() -> argparse.Namespace:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     args = parse_args()
@@ -403,14 +555,6 @@ def main() -> None:
     for label, _ in episodes:
         print(f"  • {label}")
 
-    # -- Init Rerun (proven pattern) --
-    rr.init("so101_episode_browser")
-    server_uri = rr.serve_grpc()
-    rr.serve_web_viewer(connect_to=server_uri, open_browser=False)
-    rr.send_blueprint(blueprint)
-    viewer_url = "http://127.0.0.1:9090?url=rerun%2Bhttp%3A%2F%2F127.0.0.1%3A9876%2Fproxy"
-    print(f"Rerun web viewer: {viewer_url}")
-
     # -- Init ROS2 --
     rclpy.init()
     topics = Topics(
@@ -421,7 +565,6 @@ def main() -> None:
         joint_trajectory=args.joint_trajectory or None,
     )
     node = So101Ros2ToRerun(topics, args.cmd_joints)
-    node.set_parameters([Parameter("use_sim_time", Parameter.Type.BOOL, True)])
     executor = MultiThreadedExecutor()
     executor.add_node(node)
 
@@ -443,9 +586,9 @@ def main() -> None:
     atexit.register(cleanup)
 
     # -- Build and launch Gradio --
-    demo = build_ui(episodes, viewer_url)
+    demo = build_ui(episodes, node)
     print(f"Launching Gradio on {args.server_name}:{args.server_port}")
-    demo.launch(
+    demo.queue().launch(
         server_name=args.server_name,
         server_port=args.server_port,
         share=False,
