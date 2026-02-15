@@ -179,11 +179,14 @@ ros2 run episode_recorder teleop_episode_keyboard
 
 Keys: **r** — start recording, **s** — save & stop, **d** / Backspace — discard episode, **q** — quit, **h** — help. Episodes are saved to `~/.ros/so101_episodes/` by default.
 
-### MoveIt 2 (Follower)
+After recording, you can review your episodes with the built-in episode viewer powered by [Gradio](https://www.gradio.app/) and [gradio-rerun](https://pypi.org/project/gradio-rerun/), which makes it easy to browse, select, and visualize episodes in the browser:
 
 ```bash
-ros2 launch so101_bringup follower_moveit_demo.launch.py
+# pixi run python scripts/so101_episode_viewer_ros2.py --episodes_root ~/.ros/so101_episodes/pick_and_place
+pixi run python scripts/so101_episode_viewer_mcap.py --episodes_root ~/.ros/so101_episodes/pick_and_place
 ```
+
+> **Note:** A ROS 2 variant (`so101_episode_viewer_ros2.py`) also exists — it replays bags through ROS 2 to correctly visualize `Float64MultiArray` action messages that the MCAP reader doesn't natively decode. In a future Rerun release, MCAP will be fully supported and the ROS 2 variant will no longer be needed.
 
 ### Rerun (Live Visualization)
 
@@ -206,6 +209,14 @@ Or run the bridge standalone:
 cd ~/ros2_ws/src/so101-ros-physical-ai
 pixi run viewer   # in one terminal
 pixi run bridge   # in another (after sourcing ROS)
+```
+
+### MoveIt 2 (Follower)
+
+MoveIt 2 is configured with dedicated ros2_control controllers for the follower arm: a `FollowJointTrajectory` controller for the 5-DOF arm and a `ParallelGripperCommand` controller for the gripper, enabling OMPL-based motion planning with independent gripper control.
+
+```bash
+ros2 launch so101_bringup follower_moveit_demo.launch.py
 ```
 
 ---
