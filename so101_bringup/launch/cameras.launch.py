@@ -1,6 +1,6 @@
 import os
-import yaml
 
+import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
@@ -24,18 +24,63 @@ def _spawn_cameras(context):
         cam_type = cam["camera_type"]
         param_path = cam["param_path"]
 
-        param_file = param_path if os.path.isabs(param_path) else os.path.join(
-            pkg_share, "config", "cameras", param_path
+        param_file = (
+            param_path
+            if os.path.isabs(param_path)
+            else os.path.join(pkg_share, "config", "cameras", param_path)
         )
 
-        if cam_type == "usb_camera":
+        if cam_type == "v4l2_camera":
+            nodes.append(
+                Node(
+                    package="v4l2_camera",
+                    executable="v4l2_camera_node",
+                    name=name,
+                    namespace=ns,
+                    parameters=[param_file, {"use_sim_time": False}],
+                    output="screen",
+                )
+            )
+        elif cam_type == "libcam":
+            nodes.append(
+                Node(
+                    package="camera_ros",
+                    executable="camera_node",
+                    name=name,
+                    namespace=ns,
+                    parameters=[param_file, {"use_sim_time": False}],
+                    output="screen",
+                    remappings=[
+                        ("~/image_raw", "image_raw"),
+                        ("~/camera_info", "camera_info"),
+                        ("~/image_raw/compressed", "image_raw/compressed"),
+                    ],
+                )
+            )
+        elif cam_type == "gscam":
+            nodes.append(
+                Node(
+                    package="gscam",
+                    executable="gscam_node",
+                    name=name,
+                    namespace=ns,
+                    parameters=[param_file, {"use_sim_time": False}],
+                    output="screen",
+                    remappings=[
+                        ("camera/image_raw", "image_raw"),
+                        ("camera/camera_info", "camera_info"),
+                        ("camera/image_raw/compressed", "image_raw/compressed"),
+                    ],
+                )
+            )
+        elif cam_type == "usb_camera":
             nodes.append(
                 Node(
                     package="usb_cam",
                     executable="usb_cam_node_exe",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file],
+                    parameters=[param_file, {"use_sim_time": False}],
                     output="screen",
                 )
             )
@@ -46,7 +91,7 @@ def _spawn_cameras(context):
                     executable="realsense2_camera_node",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file],
+                    parameters=[param_file, {"use_sim_time": False}],
                     output="screen",
                 )
             )

@@ -1,0 +1,32 @@
+/**:
+  ros__parameters:
+    image_size: [640, 480]
+    time_per_frame: [1, 30]   # 30 FPS
+    
+    pixel_format: "YUYV"          # supported: YUYV | UYVY | GREY
+    output_encoding: "bgr8"       # supported: rgb8 | yuv422 | mono8 | bgr8
+
+    use_v4l2_buffer_timestamps: true   # Better timestamp accuracy (helps your latency measurement)
+    timestamp_offset: 0
+
+    camera_info_url: "" # Keeps log clean
+
+    white_balance_automatic: true
+    # auto_exposure: 3
+    focus_automatic_continuous: false
+    exposure_dynamic_framerate: false
+
+/follower/cam_wrist:
+  ros__parameters:
+    auto_exposure: 3
+    # v4l2-ctl -d /dev/video0 --list-ctrls
+    exposure_time_absolute: 157 # default
+    video_device: "/dev/cam_wrist"
+    frame_id: "cam_wrist"
+    camera_name: "cam_wrist"
+
+/static_camera/cam_overhead:
+  ros__parameters:
+    video_device: "/dev/cam_overhead"
+    frame_id: "cam_overhead"
+    camera_name: "cam_overhead"

@@ -1,10 +1,11 @@
 cameras:
   - name: cam_wrist # name of camera
-    camera_type: usb_camera # name of pkg # Currently supports 'usb_camera' and 'realsense2_camera'
-    param_path: so101_usb_cam.yaml # path to camera specific config file
+     # Currently supports 'v4l2_camera'|'usb_camera'|'realsense2_camera' |  "libcam" | "gscam"
+    camera_type: gscam # name of pkg 
+    param_path: so101_gs_cam.yaml # path to camera specific config file
     namespace: follower # ns (info of cam location)
 
   - name: cam_overhead
-    camera_type: usb_camera
-    param_path: so101_usb_cam.yaml
+    camera_type: gscam
+    param_path: so101_gs_cam.yaml
     namespace: static_camera

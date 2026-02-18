@@ -1,0 +1,25 @@
+/**:
+  ros__parameters:
+    camera_info_url: ""
+    use_sensor_data_qos: false
+    sync_sink: false
+    use_gst_timestamps: true
+    image_encoding:  "rgb8" 
+
+
+/follower/cam_wrist:
+  ros__parameters:
+    frame_id: "cam_wrist"
+    camera_name: "cam_wrist"
+    # gscam_config: "v4l2src device=/dev/cam_wrist io-mode=2 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! queue max-size-buffers=1 leaky=downstream ! videoconvert"
+    # gscam_config: "v4l2src device=/dev/cam_wrist io-mode=2 ! image/jpeg,width=640,height=480,framerate=30/1 ! queue max-size-buffers=1 leaky=downstream ! jpegdec ! queue max-size-buffers=1 leaky=downstream ! videoconvert ! video/x-raw,format=RGB"
+    gscam_config: "v4l2src device=/dev/cam_wrist io-mode=2 do-timestamp=true ! image/jpeg,width=640,height=480,framerate=30/1 ! jpegdec ! videoconvert"
+
+
+/static_camera/cam_overhead:
+  ros__parameters:
+    frame_id: "cam_overhead"
+    camera_name: "cam_overhead"
+    # gscam_config: "v4l2src device=/dev/cam_overhead io-mode=2 ! video/x-raw,format=YUY2,width=640,height=480,framerate=30/1 ! queue max-size-buffers=1 leaky=downstream ! videoconvert"
+    # gscam_config: "v4l2src device=/dev/cam_overhead io-mode=2 ! image/jpeg,width=640,height=480,framerate=30/1 ! queue max-size-buffers=1 leaky=downstream ! jpegdec ! queue max-size-buffers=1 leaky=downstream ! videoconvert ! video/x-raw,format=RGB"
+    gscam_config: "v4l2src device=/dev/cam_overhead io-mode=2 do-timestamp=true ! image/jpeg,width=640,height=480,framerate=30/1 ! jpegdec ! videoconvert"

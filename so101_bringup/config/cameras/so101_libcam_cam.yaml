@@ -1,0 +1,28 @@
+/**:
+  ros__parameters:
+    width: 640
+    height: 480
+      # 30 FPS => 1/30 s = 33.333ms = 33333 us
+    FrameDurationLimits: [33333, 33333]
+    camera_info_url: ""
+
+    format: "MJPEG"                         # was pixel_format; try "BGR888" for native bgr8
+    role: "video"                    # "viewfinder" or "video" — try both for lowest latency
+
+    # Camera controls (libcamera names — run `ros2 param list` after launch to see all available)
+    AeEnable: true                        # Auto exposure ON (your old auto_exposure: 3)
+    # ExposureTime: 15700                 # ← uncomment + set AeEnable: false for manual (units = µs; test your old 157 value)
+    AwbEnable: true                       # white_balance_automatic: true
+    # AfMode: 0                           # focus_automatic_continuous: false → usually 0 = Manual, 1 = Auto, 2 = Continuous (check param list)
+    # AnalogueGain: 1.0                   # extra common control you can add
+    use_node_time: false            # keep sensor timestamps for accurate latency measurement
+
+/follower/cam_wrist:
+  ros__parameters:
+    camera: 0
+    frame_id: "cam_wrist"
+
+/static_camera/cam_overhead:
+  ros__parameters:
+    camera: 1
+    frame_id: "cam_overhead"
