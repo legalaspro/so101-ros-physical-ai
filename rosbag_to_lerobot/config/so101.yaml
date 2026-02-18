@@ -26,7 +26,7 @@ features:
     shape: [480, 640, 3]
 
   # --- Static camera ---
-  - key: "observation.images.static"
+  - key: "observation.images.top"
     topic: "/static_camera/image_raw"
     msg_type: "sensor_msgs/msg/Image"
     stamp_src: "bag"
