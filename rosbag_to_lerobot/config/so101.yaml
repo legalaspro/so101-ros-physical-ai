@@ -1,0 +1,49 @@
+robot_type: "so101"
+fps: 30
+
+# We emit one dataset frame per message on this topic
+reference_topic: "/follower/image_raw"
+
+# Writtent to every frame
+task: "Pick and Place"
+# Default freshness window (seconds) if a feature doesn't override it
+default_max_age_s: 0.1
+
+joint_names: &j
+  - shoulder_pan
+  - shoulder_lift
+  - elbow_flex
+  - wrist_flex
+  - wrist_roll
+  - gripper
+
+features:
+  # --- Reference wrist camera ---
+  - key: "observation.images.wrist"
+    topic: "/follower/image_raw"
+    msg_type: "sensor_msgs/msg/Image"
+    stamp_src: "bag"
+    shape: [480, 640, 3]
+
+  # --- Static camera ---
+  - key: "observation.images.static"
+    topic: "/static_camera/image_raw"
+    msg_type: "sensor_msgs/msg/Image"
+    stamp_src: "bag"
+    shape: [480, 640, 3]
+
+  # --- Joint state observation ---
+  - key: "observation.state"
+    topic: "/follower/joint_states"
+    msg_type: "sensor_msgs/msg/JointState"
+    stamp_src: "bag"
+    max_age_s: 0.05
+    names: *j
+
+  # --- Action (Float64MultiArray.data) ---
+  - key: "action"
+    topic: "/follower/forward_controller/commands"
+    msg_type: "std_msgs/msg/Float64MultiArray"
+    stamp_src: "bag"
+    max_age_s: 0.05
+    names: *j
