@@ -9,7 +9,7 @@
 
 Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, and live Rerun visualization — all on real hardware.
 
-> **Status:** actively developed — teleop, episode recording, and visualization are working. Next up: LeRobot dataset conversion, training pipeline, and inference/deployment. PRs and issues welcome.
+> **Status:** actively developed — teleop, episode recording, visualization, and LeRobot dataset conversion are working. Next up: training pipeline and inference/deployment. PRs and issues welcome.
 
 ---
 
@@ -36,6 +36,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 | `so101_teleop`        | C++             | Leader-to-follower teleoperation node (forward and trajectory controller modes)                  |
 | `so101_moveit_config` | YAML/Python     | MoveIt 2 config: SRDF, OMPL planning, joint limits, kinematics, controllers                      |
 | `episode_recorder`    | C++             | Minimalistic rosbag (MCAP) recorder with configurable topics and keyboard-driven episode control |
+| `rosbag_to_lerobot`   | Python          | Convert rosbag episodes to [LeRobot](https://github.com/huggingface/lerobot) v3.0 datasets (local or Hub) — runs in Pixi `lerobot` env |
 | `feetech_ros2_driver` | C++             | **Submodule** — Feetech STS3215 ros2_control hardware interface                                  |
 | `scripts/`            | Python          | `so101_ros2_to_rerun.py` — ROS 2 to Rerun bridge (runs inside Pixi env)                          |
 
@@ -67,6 +68,11 @@ so101-ros-physical-ai/
 │   ├── src/                 # episode_recorder.cpp, teleop_episode_keyboard.cpp
 │   ├── config/              # default_config.yaml
 │   └── launch/
+├── rosbag_to_lerobot/
+│   ├── rosbag_to_lerobot/   # Python package (bag_reader, converter, decoders, cli)
+│   ├── config/
+│   │   └── so101.yaml       # Default conversion config (topics, features, sync)
+│   └── test/
 ├── feetech_ros2_driver/     # (submodule) Feetech ros2_control plugin
 ├── scripts/
 │   └── so101_ros2_to_rerun.py
@@ -74,7 +80,7 @@ so101-ros-physical-ai/
 │   ├── hardware.md          # Full hardware setup guide (udev, calibration, cameras)
 │   └── assets/
 │       └── 99-so101.rules.example  # Example udev rules template
-├── pixi.toml                # Pixi env for Rerun bridge + viewer
+├── pixi.toml                # Pixi envs: default (Rerun bridge) + lerobot (dataset conversion)
 └── LICENSE
 ```
 
@@ -187,6 +193,48 @@ pixi run python scripts/so101_episode_viewer_mcap.py --episodes_root ~/.ros/so10
 ```
 
 > **Note:** A ROS 2 variant (`so101_episode_viewer_ros2.py`) also exists — it replays bags through ROS 2 to correctly visualize `Float64MultiArray` action messages that the MCAP reader doesn't natively decode. In a future Rerun release, MCAP will be fully supported and the ROS 2 variant will no longer be needed.
+
+### LeRobot Dataset Conversion
+
+The repo ships a second Pixi environment (`lerobot`) that bundles [LeRobot](https://github.com/huggingface/lerobot), ffmpeg, and all dependencies needed to convert recorded rosbag episodes into LeRobot v3.0 datasets. See the full [rosbag_to_lerobot README](rosbag_to_lerobot/README.md) for details.
+
+**Local conversion** (no Hugging Face account needed):
+
+```bash
+pixi run -e lerobot convert -- \
+  --input-dir  ~/.ros/so101_episodes/pick_and_place_2 \
+  --config     ~/ros2_ws/src/so101-ros-physical-ai/rosbag_to_lerobot/config/so101.yaml \
+  --repo-id    local/so101_test
+```
+
+**Push to Hugging Face Hub:**
+
+```bash
+# Authenticate (once)
+pixi run -e lerobot -- hf auth login
+# or: export HF_TOKEN="hf_..."
+
+# Verify
+pixi run -e lerobot -- hf auth whoami
+
+# Convert & push
+pixi run -e lerobot convert -- \
+  --input-dir  ~/.ros/so101_episodes/pick_and_place_2 \
+  --config     ~/ros2_ws/src/so101-ros-physical-ai/rosbag_to_lerobot/config/so101.yaml \
+  --repo-id    <hf-username>/so101-pick-and-place \
+  --push-hub
+```
+
+**Visualize** the converted dataset:
+
+```bash
+# Local — enter the lerobot shell and use the built-in visualizer
+pixi shell -e lerobot
+lerobot-dataset-viz --repo-id local/so101_test --episode-index 0
+
+# Online — after pushing to the Hub, open:
+# https://huggingface.co/spaces/lerobot/visualize_dataset
+```
 
 ### Rerun (Live Visualization)
 
