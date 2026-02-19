@@ -42,18 +42,18 @@ def main() -> None:
         help="Directory containing episode bag subdirectories",
     )
     parser.add_argument(
-        "--output-dir",
-        required=True,
-        type=Path,
-        help="Output directory for the LeRobot dataset",
-    )
-    parser.add_argument(
         "--config", required=True, type=Path, help="Path to YAML config file."
     )
     parser.add_argument(
         "--repo-id",
         required=True,
         help="HuggingFace repo ID (e.g., user/dataset_name)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        type=Path,
+        help="Output directory for the LeRobot dataset. If omitted, uses LeRobot default (~/.cache/huggingface/lerobot/<repo_id>).",
     )
     parser.add_argument(
         "--use-videos",
@@ -63,14 +63,31 @@ def main() -> None:
     )
     parser.add_argument(
         "--vcodec",
-        default="libx264",
-        help="Video codec for encoding (default: libx264)",
+        type=str,
+        default="libsvtav1",
+        choices=["libsvtav1", "libx264", "h264", "hevc", "h264_nvenc"],
+        help=(
+            "Video codec for encoding (default: libsvtav1). "
+            "Use libx264/h264 for faster CPU encoding; use h264_nvenc if you have NVIDIA NVENC."
+        ),
     )
     parser.add_argument(
         "--push-hub",
         action="store_true",
         default=False,
         help="Push final dataset to HuggingFace Hub",
+    )
+    parser.add_argument(
+        "--sync-p95",
+        action="store_true",
+        default=False,
+        help="Collect p95 sync stats (slightly more overhead). Default: off.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        default=False,
+        help="If set, delete any existing dataset directory before writing.",
     )
 
     args = parser.parse_args()
@@ -92,14 +109,18 @@ def main() -> None:
 
     try:
         cfg = load_config(args.config)
+
+        output_dir = args.output_dir.expanduser() if args.output_dir else None
         convert_all_bags(
             cfg=cfg,
-            input_dir=Path(args.input_dir),
-            output_dir=Path(args.output_dir),
+            input_dir=args.input_dir,
+            output_dir=output_dir,
             repo_id=args.repo_id,
             use_videos=args.use_videos,
             vcodec=args.vcodec,
             push_to_hub=args.push_hub,
+            collect_p95=args.sync_p95,
+            overwrite=args.overwrite,
         )
     except Exception as exc:
         logger.error("Conversion failed: %s", exc)

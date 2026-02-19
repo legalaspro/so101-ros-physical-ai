@@ -40,7 +40,13 @@ class LastBuffer:
       - dt_ns_p95: computed from reservoir (optional, see below)
     """
 
-    def __init__(self, *, max_age_ns: int) -> None:
+    def __init__(
+        self,
+        *,
+        max_age_ns: int,
+        collect_p95: bool = False,
+        reservoir_cap: int = 2000,
+    ) -> None:
         self.max_age_ns = int(max_age_ns)
         self.item: Optional[BufferItem] = None
 
@@ -55,9 +61,15 @@ class LastBuffer:
         self._dt_ns_sum = 0
         self._dt_ns_max = 0
 
-        # Keep a small sample of dt's for percentiles without storing everything
-        self._reservoir = np.empty((0,), dtype=np.int64)
-        self._reservoir_cap = 2000  # good enough
+        # Optional p95 reservoir
+        self.collect_p95 = bool(collect_p95)
+        self._reservoir_cap = int(reservoir_cap)
+        self._reservoir = (
+            np.empty((self._reservoir_cap,), dtype=np.int64)
+            if self.collect_p95
+            else None
+        )
+        self._reservoir_n = 0
 
     def push(self, ts_ns: int, value: np.ndarray) -> None:
         """Store value if it's newer than (or equal to) the current item."""
@@ -91,13 +103,14 @@ class LastBuffer:
         if dt > self._dt_ns_max:
             self._dt_ns_max = dt
 
-        # reservoir for percentile
-        if self._reservoir.size < self._reservoir_cap:
-            self._reservoir = np.append(self._reservoir, dt)
-        else:
-            # simple downsample: replace random entry with small probability
-            j = self.tried % self._reservoir_cap
-            self._reservoir[j] = dt
+        # optional reservoir for percentile
+        if self.collect_p95 and self._reservoir is not None:
+            if self._reservoir_n < self._reservoir_cap:
+                self._reservoir[self._reservoir_n] = dt
+                self._reservoir_n += 1
+            else:
+                j = self.tried % self._reservoir_cap
+                self._reservoir[j] = dt
 
         return self.item.value
 
@@ -111,11 +124,13 @@ class LastBuffer:
         if self.matched > 0:
             mean_dt_s = (self._dt_ns_sum / self.matched) / 1e9
 
-        if self._reservoir.size > 0:
+        if self.collect_p95 and self._reservoir is not None and self._reservoir_n > 0:
             p95_dt_s = float(
-                np.percentile(self._reservoir.astype(np.float64), 95) / 1e9
+                np.percentile(
+                    self._reservoir[: self._reservoir_n].astype(np.float64), 95
+                )
+                / 1e9
             )
-
         return {
             "max_age_s": self.max_age_ns / 1e9,
             "total_read": float(self.total_read),

@@ -28,6 +28,8 @@ setup(
         "test": ["pytest"],
     },
     entry_points={
-        "console_scripts": ["convert = rosbag_to_lerobot.cli:main"],
+        "console_scripts": [
+            "convert = rosbag_to_lerobot.cli:main",
+        ],
     },
 )

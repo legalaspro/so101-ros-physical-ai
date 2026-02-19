@@ -32,8 +32,10 @@ Notes:
 from __future__ import annotations
 
 import logging
+import time
+import shutil
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional
 
 from lerobot.datasets.lerobot_dataset import LeRobotDataset
 from rclpy.serialization import deserialize_message
@@ -55,6 +57,8 @@ logger = logging.getLogger(__name__)
 # Schema helpers
 # -----------------------------------------------------------------------------
 
+POS_KEYS = {"observation.state", "action"}
+
 
 def _is_visual(spec: FeatureSpec) -> bool:
     return get_lerobot_dtype(spec.msg_type) in ("video", "image")
@@ -68,6 +72,44 @@ def _infer_vector_shape(spec: FeatureSpec) -> Tuple[int, ...]:
     raise ValueError(
         f"Feature '{spec.key}' must define either 'shape' or 'names' "
         f"(topic={spec.topic}, msg_type={spec.msg_type})"
+    )
+
+
+def _default_lerobot_path(repo_id: str) -> Path:
+    return Path.home() / ".cache" / "huggingface" / "lerobot" / repo_id
+
+
+def _add_pos_suffix(names: list[str]) -> list[str]:
+    return [n if n.endswith(".pos") else f"{n}.pos" for n in names]
+
+
+def _fmt_sync_line(topic: str, s: dict) -> str:
+    # seconds -> ms for readability
+    mean_ms = (s.get("mean_dt_s") or 0.0) * 1e3
+    p95 = s.get("p95_dt_s")
+    if isinstance(p95, float) and p95 != p95:  # NaN check
+        p95 = None
+    p95_ms = (p95 * 1e3) if isinstance(p95, (float, int)) else None
+    max_ms = (s.get("max_dt_s") or 0.0) * 1e3
+
+    match_rate = (s.get("match_rate") or 0.0) * 100.0
+    miss_empty = int(s.get("miss_empty") or 0)
+    miss_future = int(s.get("miss_future") or 0)
+    miss_stale = int(s.get("miss_stale") or 0)
+
+    # trim noisy long topic names slightly
+    t = topic if len(topic) <= 42 else "…" + topic[-41:]
+
+    if p95_ms is None:
+        return (
+            f"{t}: match={match_rate:5.1f}%  "
+            f"dt_mean={mean_ms:6.1f}ms dt_max={max_ms:6.1f}ms  "
+            f"miss(e/f/s)={miss_empty}/{miss_future}/{miss_stale}"
+        )
+    return (
+        f"{t}: match={match_rate:5.1f}%  "
+        f"dt_mean={mean_ms:6.1f}ms dt_p95={p95_ms:6.1f}ms dt_max={max_ms:6.1f}ms  "
+        f"miss(e/f/s)={miss_empty}/{miss_future}/{miss_stale}"
     )
 
 
@@ -101,11 +143,14 @@ def _build_lerobot_features(
                 "names": ["height", "width", "channels"],
             }
         else:
-            # TODO: create generic names (j1,j2,j3)
+            names = list(spec.names) if spec.names is not None else None
+            if names is not None and spec.key in POS_KEYS:
+                names = _add_pos_suffix(names)
+
             features[spec.key] = {
                 "dtype": get_lerobot_dtype(spec.msg_type),  # e.g. float32
                 "shape": _infer_vector_shape(spec),
-                "names": list(spec.names) if spec.names is not None else None,
+                "names": names,
             }
 
     return features
@@ -142,7 +187,11 @@ def _prepare_topic_maps(
 
 
 def _convert_one_bag(
-    bag_dir: Path, cfg: Config, dataset: LeRobotDataset
+    bag_dir: Path,
+    cfg: Config,
+    dataset: LeRobotDataset,
+    *,
+    collect_p95: bool = False,
 ) -> tuple[int, int]:
 
     reader = open_reader(bag_dir)
@@ -166,7 +215,10 @@ def _convert_one_bag(
         max_age = (
             spec.max_age_s if spec.max_age_s is not None else cfg.default_max_age_s
         )
-        buffers[spec.topic] = LastBuffer(max_age_ns=int(max_age * 1e9))
+        buffers[spec.topic] = LastBuffer(
+            max_age_ns=int(max_age * 1e9),
+            collect_p95=collect_p95,
+        )
 
     frame_count = 0
     dropped_count = 0
@@ -230,8 +282,12 @@ def _convert_one_bag(
         dropped_count,
         (100.0 * dropped_count / max(1, frame_count + dropped_count)),
     )
-    for topic, buf in buffers.items():
-        logger.info("sync %s: %s", topic, buf.summary())
+
+    topic_stats = {topic: buf.summary() for topic, buf in buffers.items()}
+
+    # Lightweight per-episode sync summary
+    for topic in sorted(topic_stats.keys()):
+        logger.info("  sync %s", _fmt_sync_line(topic, topic_stats[topic]))
 
     dataset.save_episode()
     return frame_count, dropped_count
@@ -245,11 +301,13 @@ def _convert_one_bag(
 def convert_all_bags(
     cfg: Config,
     input_dir: Path,
-    output_dir: Path,
+    output_dir: Optional[Path],
     repo_id: str,
     use_videos: bool = True,
-    vcodec: str = "libx264",
+    vcodec: str = "libsvtav1",
     push_to_hub: bool = False,
+    collect_p95: bool = False,
+    overwrite: bool = False,
 ) -> None:
     """Orchestrate end-to-end conversion fo all episode bags
 
@@ -260,22 +318,23 @@ def convert_all_bags(
                         ``LeRobotDataset.create`` which writes to HF cache).
         repo_id (str):  Hugging Face repository ID for the dataset.
         use_videos (bool, optional):  If *True*, store images as video; otherwise as individual images. Defaults to True.
-        vcodec (str, optional): Video codec for encoding. Defaults to "libx264".
+        vcodec (str, optional): Video codec for encoding. Defaults to "libsvtav1".
         push_to_hub (bool, optional):   If *True*, push final dataset to Hugging Face Hub. Defaults to False.
+        collect_p95 (bool, optional): If *True*, collects additional data during episode sync.
+        overwrite (bool, optional): If *True*, delete any existing dataset directory before writing
     """
     # 1. Discover episodes
     episodes = find_episode_dirs(input_dir)
     if not episodes:
         raise RuntimeError(f"No episode directories found in {input_dir}")
 
-    if output_dir.exists():
-        raise RuntimeError(
-            f"Output directory already exists: {output_dir}\n"
-            "LeRobotDataset.create expects a new (non-existing) directory."
-        )
-
     # 2. Build features dict
     features = _build_lerobot_features(cfg, use_videos)
+
+    target = output_dir if output_dir is not None else _default_lerobot_path(repo_id)
+
+    if overwrite and target.exists():
+        shutil.rmtree(target)
 
     # 3. Create dataset
     dataset = LeRobotDataset.create(
@@ -285,31 +344,60 @@ def convert_all_bags(
         robot_type=cfg.robot_type,
         features=features,
         use_videos=use_videos,
-        video_backend=vcodec,  # LeRobot treats this as codec/backend string in many versions
+        video_backend=vcodec,
     )
 
     # 4. Convert each episode
     total_frames = 0
     total_dropped = 0
+    t_total0 = time.perf_counter()
 
     logger.info("Found %d episode(s) in %s", len(episodes), input_dir)
-    for bag_dir in episodes:
-        logger.info("Converting episodes: %s", bag_dir.name)
-        frames, dropped = _convert_one_bag(bag_dir, cfg, dataset)
+    for i, bag_dir in enumerate(episodes, start=1):
+        t0 = time.perf_counter()
+        logger.info("Converting episode %d/%d: %s", i, len(episodes), bag_dir.name)
+
+        frames, dropped = _convert_one_bag(
+            bag_dir, cfg, dataset, collect_p95=collect_p95
+        )
+
+        dt = time.perf_counter() - t0
         total_frames += frames
         total_dropped += dropped
+
+        logger.info(
+            "Finished %s in %.2fs (frames=%d, dropped=%d, drop=%.1f%%)",
+            bag_dir.name,
+            dt,
+            frames,
+            dropped,
+            100.0 * dropped / max(1, frames + dropped),
+        )
+
+    t_total = time.perf_counter() - t_total0
 
     # 5. Finalize
     dataset.finalize()
 
     # 6. Optionally push to hub
     if push_to_hub:
-        dataset.push_to_hub()
+        dataset.push_to_hub(
+            tags=[
+                "so101",
+                "ros2",
+                "teleoperation",
+                "imitation-learning",
+                "so101-ros-physical-ai",
+            ],
+            license="apache-2.0",
+            url="https://github.com/legalaspro/so101-ros-physical-ai",
+        )
 
     # 7. Summary
     logger.info(
-        "Conversion complete: %d episodes, %d frames, %d dropped",
+        "Conversion complete: %d episodes, %d frames, %d dropped (total time %.2fs)",
         len(episodes),
         total_frames,
         total_dropped,
+        t_total,
     )
