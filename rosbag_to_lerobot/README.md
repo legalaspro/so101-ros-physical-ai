@@ -102,6 +102,8 @@ After pushing a dataset to the Hub, visualize it at:
 
 Enter your `repo-id` (e.g. `<hf-username>/so101-pick-and-place`) and browse episodes interactively.
 
+For a live example, see [legalaspro/so101-ros-physical-ai-test](https://huggingface.co/datasets/legalaspro/so101-ros-physical-ai-test).
+
 ---
 
 ## Configuration
@@ -126,7 +128,7 @@ Each feature declares a `stamp_src` that controls which timestamp is used for sy
 | `bag` **(default)** | Use the bag-level receive timestamp (from `read_next()`). Recommended for real hardware. |
 | `header` | Use the message's `header.stamp`. Useful in simulation where clocks are perfectly synced. Falls back to `bag` if the message type has no header. |
 
-We default to `bag` because it reflects the moment the message was actually written to the bag, which gives the most consistent alignment across topics on real hardware. Camera drivers in particular report header timestamps that lag behind the true capture time by varying amounts — after benchmarking several ROS 2 camera drivers (`v4l2_camera`, `usb_cam`, `camera_ros`/libcamera, `gscam`) we found that `camera_ros` and `gscam` performed best in terms of stable Hz and low header-to-bag delay; we selected `gscam` as slightly better overall (~30-35 ms delay). Even so, the bag timestamp remains the most reliable common reference for cross-topic synchronization. In simulation, where all clocks are perfectly synchronized, `header` can be the better choice.
+The default is `bag` because it reflects the moment the message was actually written to the bag, which gives the most consistent alignment across topics on real hardware. Camera drivers in particular report header timestamps that lag behind the true capture time by varying amounts — after benchmarking several ROS 2 camera drivers (`v4l2_camera`, `usb_cam`, `camera_ros`/libcamera, `gscam`) I found that `camera_ros` and `gscam` performed best in terms of stable Hz and low header-to-bag delay; I selected `gscam` as slightly better overall (~30-35 ms delay). Even so, the bag timestamp remains the most reliable common reference for cross-topic synchronization. In simulation, where all clocks are perfectly synchronized, `header` can be the better choice.
 
 ### Supported message types
 
