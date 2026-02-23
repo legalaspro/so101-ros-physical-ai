@@ -33,17 +33,34 @@ import yaml
 logger = logging.getLogger(__name__)
 
 
-def _read_storage_id(bag_dir: Path) -> str:
-    """Best-effort storage backend inference from metadata.yaml."""
+def _read_bag_metadata(bag_dir: Path) -> Dict[str, Any]:
+    """
+    Read rosbag2 metadata.yaml and return the rosbag2_bagfile_information dict.
+    """
     meta_path = bag_dir / "metadata.yaml"
     if not meta_path.exists():
-        return "mcap"
+        return {}
+
     try:
-        meta = yaml.safe_load(meta_path.read_text()) or {}
-        info = meta.get("rosbag2_bagfile_information", {})
-        return info.get("storage_identifier", "mcap")
+        meta = yaml.safe_load(meta_path.read_text(encoding="utf-8")) or {}
     except Exception:
-        return "mcap"
+        return {}
+
+    info = meta.get("rosbag2_bagfile_information")
+    return info if isinstance(info, dict) else {}
+
+
+def _read_storage_id(bag_dir: Path, default: str = "mcap") -> str:
+    """Best-effort storage backend inference from metadata.yaml."""
+    info = _read_bag_metadata(bag_dir)
+    sid = info.get("storage_identifier", default)
+    return sid if isinstance(sid, str) and sid else default
+
+
+def get_custom_data(bag_dir: Path) -> Dict[str, Any]:
+    info = _read_bag_metadata(bag_dir)
+    cd = info.get("custom_data", {}) or {}
+    return cd if isinstance(cd, dict) else {}
 
 
 def open_reader(bag_dir: Path) -> rosbag2_py.SequentialReader:

@@ -46,6 +46,7 @@ from rosbag_to_lerobot.bag_reader import (
     get_topic_types,
     msg_time_ns,
     open_reader,
+    get_custom_data,
 )
 from rosbag_to_lerobot.buffers import LastBuffer
 from rosbag_to_lerobot.config import Config, FeatureSpec
@@ -194,6 +195,15 @@ def _convert_one_bag(
     collect_p95: bool = False,
 ) -> tuple[int, int]:
 
+    # Resolve per-episode custom task once
+    custom = get_custom_data(bag_dir)
+    episode_task = custom.get("task")
+    task = str(episode_task) if episode_task else cfg.task
+    if not task:
+        raise ValueError(
+            f"Episode {bag_dir.name}: task is empty (no custom_data['task'] and cfg.task empty)"
+        )
+
     reader = open_reader(bag_dir)
     bag_topic_types = get_topic_types(reader)
 
@@ -239,7 +249,7 @@ def _convert_one_bag(
             frame: Dict[str, Any] = {}
 
             frame[ref_spec.key] = decode(msg, ref_spec)
-            frame["task"] = cfg.task
+            frame["task"] = task
             # logger.info(
             #     "image delay (bag - header) = %.3f s", (bag_ts_ns - ts_ns) / 1e9
             # )
@@ -288,6 +298,13 @@ def _convert_one_bag(
     # Lightweight per-episode sync summary
     for topic in sorted(topic_stats.keys()):
         logger.info("  sync %s", _fmt_sync_line(topic, topic_stats[topic]))
+
+    if frame_count == 0:
+        logger.error(
+            "Episode %s produced 0 frames (reference topic missing or stale). Skipping save.",
+            bag_dir.name,
+        )
+        return 0, dropped_count
 
     dataset.save_episode()
     return frame_count, dropped_count
