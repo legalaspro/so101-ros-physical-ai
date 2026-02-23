@@ -9,6 +9,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 
 #include "rclcpp/generic_subscription.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -51,12 +52,18 @@ private:
 
   // Topics and Subscriptions
   std::unordered_map<std::string, std::string> topic_type_map_;
-  std::vector<rclcpp::GenericSubscription::SharedPtr> subscriptions_;
+  std::unordered_map<std::string, rclcpp::GenericSubscription::SharedPtr> subs_by_topic_;
+
+  // Control alive topics
+  std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_rx_;
+  rclcpp::TimerBase::SharedPtr discovery_timer_;
+  double start_gate_max_age_s_ = 0.5;
 
   void resolve_topic_types();
   void create_subscriptions();
   rclcpp::QoS qos_for_topic(const std::string &topic) const;
-
+  std::string check_topics_alive(double max_age_s) const;
+  
   // Recording State
   std::mutex recording_mutex_;
   std::atomic<bool> is_recording_{false};

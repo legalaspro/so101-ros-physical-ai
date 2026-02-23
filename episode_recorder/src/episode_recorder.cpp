@@ -92,7 +92,7 @@ EpisodeRecorder::on_configure(const rclcpp_lifecycle::State & /*state*/) {
                                      std::placeholders::_2));
 
   topic_type_map_.clear();
-  subscriptions_.clear();
+  subs_by_topic_.clear();
   cleaned_up_ = false;
 
   RCLCPP_INFO(get_logger(), "Configuration complete. %zu topics requested.", topics_.size());
@@ -119,8 +119,23 @@ EpisodeRecorder::on_activate(const rclcpp_lifecycle::State & /*state*/) {
   // Create generic subscriptions (messages are only written when is_recording_ is true)
   create_subscriptions();
 
-  RCLCPP_INFO(get_logger(), "Active — %zu topics resolved, %zu subscribed.", topic_type_map_.size(),
-              subscriptions_.size());
+  discovery_timer_ = this->create_wall_timer(
+    std::chrono::milliseconds(300),
+    [this]() {
+      if (get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+        return;
+      }
+
+      resolve_topic_types();
+      create_subscriptions();
+
+      if (subs_by_topic_.size() == topics_.size()) {
+        RCLCPP_INFO(get_logger(), "Discovery complete: subscribed to all %zu topics.",
+                    topics_.size());
+        discovery_timer_.reset();
+      }
+    });
+
   return CallbackReturn::SUCCESS;
 }
 
@@ -132,9 +147,11 @@ EpisodeRecorder::on_deactivate(const rclcpp_lifecycle::State & /*state*/) {
     stop_episode();
   }
   // destroy subscriptions
-  subscriptions_.clear();
+  subs_by_topic_.clear();
   topic_type_map_.clear();
   duration_timer_.reset();
+  discovery_timer_.reset();
+  last_rx_.clear();
   return CallbackReturn::SUCCESS;
 }
 
@@ -147,14 +164,15 @@ EpisodeRecorder::CallbackReturn EpisodeRecorder::on_cleanup(const rclcpp_lifecyc
     (void)on_deactivate(state);
   }
   // destroy subscriptions
-  subscriptions_.clear();
+  subs_by_topic_.clear();
   topic_type_map_.clear();
 
   start_service_.reset();
   stop_service_.reset();
   discard_service_.reset();
   duration_timer_.reset();
-
+  discovery_timer_.reset();
+  last_rx_.clear();
   cleaned_up_ = true;
   return CallbackReturn::SUCCESS;
 }
@@ -273,8 +291,21 @@ bool EpisodeRecorder::start_episode() {
     return false;
   }
 
-  // Always re-create subscriptions (so late publishers get captured)
-  create_subscriptions();
+  if (subs_by_topic_.size() < topics_.size()) {
+    RCLCPP_ERROR(get_logger(), "Cannot start recording — not subscribed to all topics yet (%zu/%zu).",
+                subs_by_topic_.size(), topics_.size());
+    return false;
+  }
+
+  // Check if all the required topics are alive 
+  const auto bad = check_topics_alive(start_gate_max_age_s_);
+  if (!bad.empty()) {
+    RCLCPP_ERROR(get_logger(),
+                "Cannot start recording: topics not publishing recently: [%s]. "
+                "Is a camera disconnected?",
+                bad.c_str());
+    return false;
+  }
 
   auto episode_dir = make_episode_dir(next_episode_index_);
 
@@ -403,6 +434,8 @@ void EpisodeRecorder::on_message_received(const std::string &topic, const std::s
   // No mutex needed: rosbag2_cpp::Writer::write() holds its own internal
   // writer_mutex_, and SingleThreadedExecutor serializes all callbacks so
   // stop_episode() can never run concurrently with this function.
+  last_rx_[topic] = std::chrono::steady_clock::now();
+  
   if (!is_recording_.load() || !writer_) {
     return;
   }
@@ -433,12 +466,13 @@ void EpisodeRecorder::resolve_topic_types() {
 }
 
 void EpisodeRecorder::create_subscriptions() {
-  // destroy subscriptions
-  subscriptions_.clear();
-
   // Iterate topics_ to keep subscription creation deterministic
   // and scoped to exactly what was requested.
   for (const auto &topic : topics_) {
+    if (subs_by_topic_.count(topic)) {
+      continue;  // already subscribed
+    }
+
     auto it = topic_type_map_.find(topic);
     if (it == topic_type_map_.end()) continue;
     const auto &type = it->second;
@@ -450,7 +484,7 @@ void EpisodeRecorder::create_subscriptions() {
         });
 
     if (sub) {
-      subscriptions_.push_back(sub);
+      subs_by_topic_[topic] = sub;
       RCLCPP_INFO(get_logger(), "Subscribed to '%s' [%s]", topic.c_str(), type.c_str());
     } else {
       RCLCPP_ERROR(get_logger(), "Failed to subscribe to '%s'", topic.c_str());
@@ -501,6 +535,26 @@ rclcpp::QoS EpisodeRecorder::qos_for_topic(const std::string &topic) const {
   }
 
   return qos;
+}
+
+std::string EpisodeRecorder::check_topics_alive(double max_age_s) const {
+  const auto now = std::chrono::steady_clock::now();
+  std::string bad;
+
+  for (const auto &topic : topics_) {
+    auto it = last_rx_.find(topic);
+    if (it == last_rx_.end()) {
+      if (!bad.empty()) bad += ", ";
+      bad += topic + "(never)";
+      continue;
+    }
+    const double age_s = std::chrono::duration<double>(now - it->second).count();
+    if (age_s > max_age_s) {
+      if (!bad.empty()) bad += ", ";
+      bad += topic + "(stale)";
+    }
+  }
+  return bad;
 }
 
 // --------------------------------------------------------
