@@ -26,6 +26,7 @@ EpisodeRecorder::EpisodeRecorder(const rclcpp::NodeOptions &options)
   this->declare_parameter<std::string>("storage_id", "mcap");
   this->declare_parameter<double>("max_episode_duration", 0.0);
   this->declare_parameter<std::string>("experiment_name", "");
+  this->declare_parameter<std::string>("task", "");
 
   RCLCPP_INFO(get_logger(), "EpisodeRecorder node create (unconfigured)");
 }
@@ -44,7 +45,12 @@ EpisodeRecorder::on_configure(const rclcpp_lifecycle::State & /*state*/) {
   storage_id_ = this->get_parameter("storage_id").as_string();
   max_episode_duration_ = this->get_parameter("max_episode_duration").as_double();
   experiment_name_ = this->get_parameter("experiment_name").as_string();
-
+  task_ = this->get_parameter("task").as_string();
+  
+  if (task_.empty()) {
+    RCLCPP_ERROR(get_logger(), "Parameter 'task' is empty. Provide via launch: task:=<name>");
+    return CallbackReturn::FAILURE;
+  }
   if (topics_.empty()) {
     RCLCPP_ERROR(get_logger(), "Parameter 'topics' is empty - nothing to record");
     return CallbackReturn::FAILURE;
@@ -285,6 +291,12 @@ bool EpisodeRecorder::start_episode() {
     storage_options.custom_data["experiment_name"] = experiment_name_;
   }
   storage_options.custom_data["episode_index"] = std::to_string(next_episode_index_);
+  task_ = this->get_parameter("task").as_string();
+  if (task_.empty()) {
+    RCLCPP_ERROR(get_logger(), "Cannot start recording: parameter 'task' is empty");
+    return false;
+  }
+  storage_options.custom_data["task"] = task_;
 
   try {
     writer_->open(storage_options,

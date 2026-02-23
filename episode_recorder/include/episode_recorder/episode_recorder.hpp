@@ -44,6 +44,7 @@ private:
   std::vector<std::string> topics_;
   double max_episode_duration_{0.0};
   std::string experiment_name_;
+  std::string task_;
 
   // Effective output path: root_dir_ / experiment_name_ (if set)
   std::filesystem::path output_dir_;

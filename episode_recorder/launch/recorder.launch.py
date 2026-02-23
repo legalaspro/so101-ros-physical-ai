@@ -4,7 +4,11 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler
 from launch.event_handlers import OnProcessStart
 from launch.events import matches_action
-from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (
+    EnvironmentVariable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+)
 from launch_ros.actions import LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
@@ -17,10 +21,17 @@ def generate_launch_description():
     default_params = PathJoinSubstitution(
         [FindPackageShare("episode_recorder"), "config", "default_config.yaml"]
     )
-    default_root_dir =  PathJoinSubstitution([
-        EnvironmentVariable("ROS_HOME", default_value=PathJoinSubstitution([EnvironmentVariable("HOME"), ".ros"])),
-        "so101_episodes",
-    ])
+    default_root_dir = PathJoinSubstitution(
+        [
+            EnvironmentVariable(
+                "ROS_HOME",
+                default_value=PathJoinSubstitution(
+                    [EnvironmentVariable("HOME"), ".ros"]
+                ),
+            ),
+            "so101_episodes",
+        ]
+    )
 
     # --- Launch arguments ---
     params_file = DeclareLaunchArgument(
@@ -41,12 +52,17 @@ def generate_launch_description():
         description="Optional subfolder under root_dir (handled by the recorder node)",
     )
 
+    task = DeclareLaunchArgument(
+        "task",
+        default_value="",
+        description="Task label to store in rosbag2 metadata custom_data (required).",
+    )
+
     recorder_ns = DeclareLaunchArgument(
         "recorder_ns",
         default_value="",
         description="Namespace for recorder node (optional)",
     )
-
 
     recorder = LifecycleNode(
         package="episode_recorder",
@@ -59,6 +75,7 @@ def generate_launch_description():
             {
                 "root_dir": LaunchConfiguration("root_dir"),
                 "experiment_name": LaunchConfiguration("experiment_name"),
+                "task": LaunchConfiguration("task"),
             },
         ],
     )
@@ -94,12 +111,12 @@ def generate_launch_description():
         )
     )
 
-
     return LaunchDescription(
         [
             params_file,
             root_dir,
             experiment_name,
+            task,
             recorder_ns,
             recorder,
             configure_on_start,

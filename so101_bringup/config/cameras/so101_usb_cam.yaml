@@ -2,7 +2,6 @@
   ros__parameters:
     framerate: 30.0
     io_method: "mmap"
-    # pixel_format: "yuyv"
     pixel_format: "mjpeg2rgb"
     av_device_format: "YUV422P"
     image_width: 640
