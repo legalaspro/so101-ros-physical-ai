@@ -174,7 +174,8 @@ ros2 launch so101_bringup teleop.launch.py use_teleop_rviz:=false
 Record teleoperation episodes for imitation learning. In one terminal, launch the recording session:
 
 ```bash
-ros2 launch so101_bringup recording_session.launch.py experiment_name:=pick_and_place
+ros2 launch so101_bringup recording_session.launch.py experiment_name:=pick_and_place task:="Pick up the cube and place it in the container." 
+# user_rerun:=true
 ```
 
 In a second terminal, run the interactive keyboard controller:
@@ -202,7 +203,7 @@ The repo ships a second Pixi environment (`lerobot`) that bundles [LeRobot](http
 
 ```bash
 pixi run -e lerobot convert -- \
-  --input-dir  ~/.ros/so101_episodes/pick_and_place_2 \
+  --input-dir  ~/.ros/so101_episodes/pick_and_place \
   --config     ~/ros2_ws/src/so101-ros-physical-ai/rosbag_to_lerobot/config/so101.yaml \
   --repo-id    local/so101_test
 ```
@@ -219,7 +220,7 @@ pixi run -e lerobot -- hf auth whoami
 
 # Convert & push
 pixi run -e lerobot convert -- \
-  --input-dir  ~/.ros/so101_episodes/pick_and_place_2 \
+  --input-dir  ~/.ros/so101_episodes/pick_and_place \
   --config     ~/ros2_ws/src/so101-ros-physical-ai/rosbag_to_lerobot/config/so101.yaml \
   --repo-id    <hf-username>/so101-pick-and-place \
   --push-hub
