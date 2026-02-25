@@ -159,7 +159,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "cameras_config_file", default_value=default_cameras_cfg
             ),
-            DeclareLaunchArgument("use_inference", default_value="true"),
+            DeclareLaunchArgument("use_inference", default_value="false"),
             DeclareLaunchArgument("inference_delay_s", default_value="2.0"),
             DeclareLaunchArgument(
                 "repo_id", default_value="legalaspro/act-so101-pick-place-cube-30hz-v1"
