@@ -30,10 +30,12 @@ def generate_launch_description():
     cameras_config_file = LaunchConfiguration("cameras_config_file")
 
     # Inference toggles + policy params
-    # use_inference = LaunchConfiguration("use_inference")
-    # inference_delay_s = LaunchConfiguration("inference_delay_s")
-    # policy_repo_id = LaunchConfiguration("policy_repo_id")
-    # policy_device = LaunchConfiguration("policy_device")
+    use_inference = LaunchConfiguration("use_inference")
+    inference_delay_s = LaunchConfiguration("inference_delay_s")
+
+    repo_id = LaunchConfiguration("repo_id")
+    fps = LaunchConfiguration("fps")
+    # device = LaunchConfiguration("device")
 
     use_rerun = LaunchConfiguration("use_rerun")
     rerun_env_dir = LaunchConfiguration("rerun_env_dir")
@@ -69,29 +71,34 @@ def generate_launch_description():
     )
 
     # --- Inference node ---
-    # inference_node = Node(
-    #     package="so101_inference",
-    #     executable="lerobot_inference_node",
-    #     name="lerobot_inference_node",
-    #     namespace="",
-    #     output="screen",
-    #     parameters=[
-    #         {
-    #             "repo_id": policy_repo_id,
-    #             "checkpoint": policy_checkpoint,
-    #             "device": policy_device,
-    #             # Later you can add topic params here, e.g.:
-    #             # "follower_namespace": follower_ns,
-    #         }
-    #     ],
-    #     condition=IfCondition(use_inference),
-    # )
+    # Inference process: runs inside pixi env
+    inference_proc = ExecuteProcess(
+        cmd=[
+            "pixi",
+            "run",
+            "-e",
+            "lerobot",
+            "infer",
+            "--",
+            "--ros-args",
+            "-p",
+            ["repo_id:=", repo_id],
+            "-p",
+            ["fps:=", fps],
+            # "-p",
+            # ["device:=", device],
+        ],
+        cwd=rerun_env_dir,
+        additional_env={"PYTHONUNBUFFERED": "1"},
+        output="screen",
+        condition=IfCondition(use_inference),
+    )
 
-    # inference_start = TimerAction(
-    #     period=inference_delay_s,
-    #     actions=[inference_node],
-    #     condition=IfCondition(use_inference),
-    # )
+    inference_start = TimerAction(
+        period=inference_delay_s,
+        actions=[inference_proc],
+        condition=IfCondition(use_inference),
+    )
 
     # --- Launch Rerun
     rerun_bridge_proc = ExecuteProcess(
@@ -152,11 +159,13 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "cameras_config_file", default_value=default_cameras_cfg
             ),
-            # inference knobs
-            DeclareLaunchArgument("use_inference", default_value="false"),
+            DeclareLaunchArgument("use_inference", default_value="true"),
             DeclareLaunchArgument("inference_delay_s", default_value="2.0"),
-            DeclareLaunchArgument("policy_repo_id", default_value=""),
-            DeclareLaunchArgument("policy_device", default_value="cpu"),
+            DeclareLaunchArgument(
+                "repo_id", default_value="legalaspro/act-so101-pick-place-cube-30hz-v1"
+            ),
+            DeclareLaunchArgument("fps", default_value="30.0"),
+            # DeclareLaunchArgument("device", default_value="cuda"),
             DeclareLaunchArgument("use_rerun", default_value="true"),
             DeclareLaunchArgument(
                 "rerun_env_dir",
@@ -170,6 +179,6 @@ def generate_launch_description():
             follower_launch,
             cameras_launch,
             rerun_start,
-            # inference_start,
+            inference_start,
         ]
     )
