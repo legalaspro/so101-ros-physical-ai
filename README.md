@@ -9,7 +9,7 @@
 
 Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, and live Rerun visualization — all on real hardware.
 
-> **Status:** actively developed — teleop, episode recording, visualization, and LeRobot dataset conversion are working. Next up: training pipeline and inference/deployment. PRs and issues welcome.
+> **Status:** actively developed — teleop, episode recording, visualization, LeRobot dataset conversion, and policy inference (ACT) are working. Next up: more policies (SmolVLA, π₀, …). PRs and issues welcome.
 
 ---
 
@@ -23,6 +23,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 | **Multi-Camera Pipeline**         | USB cameras and RealSense D400 series with configurable TF placement                         |
 | **Episode Recording**             | Record joint states + camera frames into timestamped episodes for imitation learning         |
 | **Rerun Visualization**           | Live visualization of observations, actions, and camera feeds via ROS-to-Rerun bridge (Pixi) |
+| **Policy Inference (ACT)**        | Run trained policies from LeRobot on the follower arm in real time via ROS 2                 |
 | **URDF/Xacro Model**              | Full SO-101 description with STL meshes, separate leader/follower end-effectors              |
 
 ---
@@ -37,6 +38,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 | `so101_moveit_config` | YAML/Python     | MoveIt 2 config: SRDF, OMPL planning, joint limits, kinematics, controllers                      |
 | `episode_recorder`    | C++             | Minimalistic rosbag (MCAP) recorder with configurable topics and keyboard-driven episode control |
 | `rosbag_to_lerobot`   | Python          | Convert rosbag episodes to [LeRobot](https://github.com/huggingface/lerobot) v3.0 datasets (local or Hub) — runs in Pixi `lerobot` env |
+| `so101_inference`     | Python          | LeRobot policy inference node (ACT) — subscribes to cameras + joint states, publishes actions via forward controller (runs in Pixi `lerobot` env) |
 | `feetech_ros2_driver` | C++             | **Submodule** — Feetech STS3215 ros2_control hardware interface                                  |
 | `scripts/`            | Python          | `so101_ros2_to_rerun.py` — ROS 2 to Rerun bridge (runs inside Pixi env)                          |
 
@@ -73,6 +75,8 @@ so101-ros-physical-ai/
 │   ├── config/
 │   │   └── so101.yaml       # Default conversion config (topics, features, sync)
 │   └── test/
+├── so101_inference/
+│   └── so101_inference/     # LeRobot policy inference node + utils (runs in Pixi lerobot env)
 ├── feetech_ros2_driver/     # (submodule) Feetech ros2_control plugin
 ├── scripts/
 │   └── so101_ros2_to_rerun.py
@@ -80,7 +84,7 @@ so101-ros-physical-ai/
 │   ├── hardware.md          # Full hardware setup guide (udev, calibration, cameras)
 │   └── assets/
 │       └── 99-so101.rules.example  # Example udev rules template
-├── pixi.toml                # Pixi envs: default (Rerun bridge) + lerobot (dataset conversion)
+├── pixi.toml                # Pixi envs: default (Rerun bridge) + lerobot (dataset conversion + inference)
 └── LICENSE
 ```
 
@@ -92,7 +96,7 @@ so101-ros-physical-ai/
 - Two SO-101 arms (leader + follower) with Feetech STS3215 servos, connected via USB
 - `rosdep`, `colcon`
 - (Optional) USB cameras / Intel RealSense for vision
-- (Optional) [Pixi](https://pixi.sh/) for Rerun visualization
+- (Optional) [Pixi](https://pixi.sh/) — required for Rerun visualization, dataset conversion, and policy inference
 
 ### Hardware Setup & Calibration
 
@@ -237,6 +241,60 @@ lerobot-dataset-viz --repo-id local/so101_test --episode-index 0
 # https://huggingface.co/spaces/lerobot/visualize_dataset
 ```
 
+### Training (LeRobot)
+
+Once you have a LeRobot dataset (local or on the Hub), train a policy using the [LeRobot](https://github.com/huggingface/lerobot) training CLI:
+
+```bash
+pixi shell -e lerobot
+
+lerobot-train \
+  --dataset.repo_id=<hf-username>/so101-pick-and-place \
+  --policy.type=act \
+  --output_dir=outputs/train/act_so101_pick_place \
+  --job_name=act_so101_pick_place \
+  --policy.device=cuda
+```
+
+Optional flags: `--wandb.enable=true`, `--policy.repo_id=<hf-username>/<policy-name>` (auto-push checkpoint to Hub). See the [LeRobot training docs](https://huggingface.co/docs/lerobot/il_robots#train-a-policy) for the full list of options.
+
+### Policy Inference — ACT (LeRobot)
+
+Deploy a trained [ACT](https://huggingface.co/docs/lerobot/act) policy on the real SO-101 follower arm. The inference pipeline is split into two processes so that the ROS 2 hardware stack and the LeRobot policy run in their own environments:
+
+**Terminal 1 — bring up the follower arm + cameras (+ optional Rerun):**
+
+```bash
+source ~/ros2_ws/install/setup.bash
+ros2 launch so101_bringup inference.launch.py
+```
+
+**Terminal 2 — run the policy (Pixi `lerobot` env):**
+
+```bash
+cd ~/ros2_ws/src/so101-ros-physical-ai
+pixi run -e lerobot infer
+```
+
+The `infer` task sources ROS 2, then launches `so101_inference.lerobot_inference_node` inside the Pixi `lerobot` environment where PyTorch and LeRobot are available. The node:
+
+1. Downloads the policy checkpoint from the Hugging Face Hub (default: `legalaspro/act-so101-pick-place-cube-30hz-v1`).
+2. Subscribes to `/follower/joint_states`, `/static_camera/image_raw`, and `/follower/image_raw`.
+3. Runs inference at 30 Hz and publishes actions to `/follower/forward_controller/commands`.
+
+Common overrides (pass as ROS parameters):
+
+```bash
+# Use a different policy checkpoint
+pixi run -e lerobot infer --ros-args -p repo_id:=<hf-username>/<policy-repo>
+
+# Change inference rate
+pixi run -e lerobot infer --ros-args -p fps:=15.0
+
+# Disable Rerun in the launch file
+ros2 launch so101_bringup inference.launch.py use_rerun:=false
+```
+
 ### Rerun (Live Visualization)
 
 The repo ships a [Pixi](https://pixi.sh/) environment with `bridge` and `viewer` tasks. Rerun can be added to both teleop and recording sessions:
@@ -284,6 +342,16 @@ ros2 launch so101_bringup follower_moveit_demo.launch.py
 | `use_rerun`         | `false`               | Launch Rerun bridge                                    |
 | `leader_usb_port`   | `/dev/so101_leader`   | Leader arm USB device                                  |
 | `follower_usb_port` | `/dev/so101_follower` | Follower arm USB device                                |
+
+### Launch Arguments (inference.launch.py)
+
+| Argument                       | Default               | Description                                            |
+| ------------------------------ | --------------------- | ------------------------------------------------------ |
+| `hardware_type`                | `real`                | `real` or `mock`                                       |
+| `arm_controller`               | `forward_controller`  | `forward_controller` or `trajectory_controller`        |
+| `follower_usb_port`            | `/dev/so101_follower` | Follower arm USB device                                |
+| `use_rerun`                    | `true`                | Launch Rerun bridge alongside hardware                 |
+| `rerun_env_dir`                | `$SO101_RERUN_ENV_DIR`| Path to repo root (for Pixi Rerun env)                 |
 
 ### Hardware Configs
 
