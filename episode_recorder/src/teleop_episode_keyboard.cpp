@@ -1,6 +1,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <cctype>
 #include <functional>
 #include <memory>
 #include <string>
@@ -9,6 +10,9 @@
 #include <unistd.h>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rcl_interfaces/srv/set_parameters.hpp"
+#include "rcl_interfaces/msg/parameter.hpp"
+#include "rcl_interfaces/msg/parameter_type.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -104,15 +108,18 @@ public:
     std::string start_srv_name = recorder_prefix_ + "/start_recording";
     std::string stop_srv_name = recorder_prefix_ + "/stop_recording";
     std::string discard_srv_name = recorder_prefix_ + "/discard_episode";
+    std::string set_params_srv_name = recorder_prefix_ + "/set_parameters";
 
     start_client_ = this->create_client<std_srvs::srv::Trigger>(start_srv_name);
     stop_client_ = this->create_client<std_srvs::srv::Trigger>(stop_srv_name);
     discard_client_ = this->create_client<std_srvs::srv::Trigger>(discard_srv_name);
+    set_params_client_ = this->create_client<rcl_interfaces::srv::SetParameters>(set_params_srv_name);
 
     RCLCPP_INFO(get_logger(), "Service clients:");
     RCLCPP_INFO(get_logger(), "  start:   %s", start_srv_name.c_str());
     RCLCPP_INFO(get_logger(), "  stop:    %s", stop_srv_name.c_str());
     RCLCPP_INFO(get_logger(), "  discard: %s", discard_srv_name.c_str());
+    RCLCPP_INFO(get_logger(), "  set_params: %s", set_params_srv_name.c_str());
 
     // Timer for polling keyboard input (~50 Hz)
     key_timer_ = this->create_wall_timer(std::chrono::milliseconds(20),
@@ -130,6 +137,7 @@ private:
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr start_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr stop_client_;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr discard_client_;
+  rclcpp::Client<rcl_interfaces::srv::SetParameters>::SharedPtr set_params_client_;
   rclcpp::TimerBase::SharedPtr key_timer_;
   rclcpp::TimerBase::SharedPtr display_timer_;
 
@@ -141,6 +149,11 @@ private:
 
   TerminalRawMode &term_; // owned by main(); enabled in main()
 
+  // Task edit mode
+  bool editing_task_{false};
+  std::string task_buffer_;
+  std::string last_task_;
+
   void print_help() {
     std::printf("\n");
     std::printf("╔══════════════════════════════════════════╗\n");
@@ -149,6 +162,7 @@ private:
     std::printf("║  → / r  : Start recording                ║\n");
     std::printf("║  ← / s  : Stop recording & save          ║\n");
     std::printf("║  ⌫ / d  : Discard current episode        ║\n");
+    std::printf("║  t      : Set recorder 'task' parameter  ║\n");
     std::printf("║  h      : Help                           ║\n");
     std::printf("║  q      : Quit                           ║\n");
     std::printf("╚══════════════════════════════════════════╝\n");
@@ -160,6 +174,12 @@ private:
     int ch = term_.read_byte();
     if (ch < 0) {
       return; // No input available
+    }
+
+    // If we're editing the task, consume keystrokes for the editor first.
+    if (editing_task_) {
+      handle_task_input(ch);
+      return;
     }
 
     // Simple ESC sequence state machine: ESC -> '[' -> code
@@ -213,6 +233,10 @@ private:
     case '?':
       print_help();
       break;
+    case 't':
+    case 'T':
+      begin_task_edit();
+      break;
     default:
       break;
     }
@@ -220,6 +244,7 @@ private:
 
   void update_display() {
     if (!recording_) return;
+    if (editing_task_) return; // don't overwrite the prompt while editing
 
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - rec_start_);
@@ -283,6 +308,105 @@ private:
         msg_("✗  Discard failed: %s", message.c_str());
       }
       recording_ = false;
+    });
+  }
+
+  // ------------------------------------
+  // Task editing / parameter set
+  // ------------------------------------
+
+  void begin_task_edit() {
+    if (service_pending_) return msg_("⏳ Service call in progress, please wait...");
+    if (editing_task_) return;
+      
+    editing_task_ = true;
+    task_buffer_ = last_task_;  // prefill with last set value (if any)
+    
+    msg_("📝 Edit recorder task (Enter=apply, Esc=cancel)");
+    redraw_task_prompt_();
+  }
+
+   void handle_task_input(int ch) {
+    // Esc cancels immediately (in edit mode we treat raw ESC as cancel)
+    if (ch == keys::ESC) {
+      editing_task_ = false;
+      task_buffer_.clear();
+      msg_("✗ Task edit cancelled");
+      return;
+    }
+    
+    // Enter applies
+    if (ch == '\n' || ch == '\r') {
+      editing_task_ = false;
+      set_task_param_(task_buffer_);
+      return;
+    }
+    
+    // Backspace
+    if (ch == keys::BACKSPACE_1 || ch == keys::BACKSPACE_2) {
+      if (!task_buffer_.empty()) task_buffer_.pop_back();
+      redraw_task_prompt_();
+      return;
+    }
+    
+    // Printable chars (including space)
+    if (std::isprint(static_cast<unsigned char>(ch))) {
+      task_buffer_.push_back(static_cast<char>(ch));
+      redraw_task_prompt_();
+    }
+  }
+
+  void redraw_task_prompt_() {
+    std::printf("\r\033[K"); // clear line
+    if (!last_task_.empty()) {
+      std::printf("Task> %s  (current: %s)", task_buffer_.c_str(), last_task_.c_str());
+    } else {
+      std::printf("Task> %s", task_buffer_.c_str());
+    }
+    std::fflush(stdout);
+  }
+  
+  void set_task_param_(const std::string &task) {
+    if (service_pending_) return msg_("⏳ Service call in progress, please wait...");
+    
+    if (!set_params_client_->service_is_ready()) {
+      msg_("✗ Parameter service not available at '%s/set_parameters' — is the recorder running?",
+          recorder_prefix_.c_str());
+      return;
+    }
+    
+    service_pending_ = true;
+    msg_("🔧 Setting recorder task = '%s' ...", task.c_str());
+
+    auto req = std::make_shared<rcl_interfaces::srv::SetParameters::Request>();
+    rcl_interfaces::msg::Parameter p;
+    p.name = "task";
+    p.value.type = rcl_interfaces::msg::ParameterType::PARAMETER_STRING;
+    p.value.string_value = task;
+    req->parameters.push_back(p);
+
+    auto self = std::static_pointer_cast<TeleopEpisodeKeyboard>(shared_from_this());
+    
+    (void)set_params_client_->async_send_request(
+      req,
+      [self, task](rclcpp::Client<rcl_interfaces::srv::SetParameters>::SharedFuture future) {
+        self->service_pending_ = false;
+        try {
+          auto resp = future.get();   
+          if (resp->results.empty()) {
+            self->msg_("✗ task set failed: empty response");
+            return;
+          }
+          const auto &r = resp->results.front();
+          if (r.successful) {
+            self->last_task_ = task;
+            self->msg_("✅ task set to '%s'", task.c_str());
+          } else {
+            self->msg_("✗ task set failed: %s", r.reason.c_str());
+          }
+        } catch (const std::exception &e) {
+          self->msg_("✗ task set exception: %s", e.what());
+        }
     });
   }
 
