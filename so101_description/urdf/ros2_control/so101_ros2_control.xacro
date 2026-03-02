@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:macro name="so101_control_joint" params="variant joint">
+    <xacro:macro name="so101_control_joint" params="variant joint id">
         <joint name="${joint}">
+            <param name="id">${id}</param>
             <!-- follower can be commanded; leader is state-only -->
             <xacro:if value="${variant == 'follower'}">
                 <command_interface name="position"/>
@@ -39,12 +40,12 @@
             </hardware>
             
             <!-- arm joints -->
-            <xacro:so101_control_joint  variant="${variant}" joint="shoulder_pan"/>
-            <xacro:so101_control_joint  variant="${variant}" joint="shoulder_lift"/>
-            <xacro:so101_control_joint  variant="${variant}" joint="elbow_flex"/>
-            <xacro:so101_control_joint  variant="${variant}" joint="wrist_flex"/>
-            <xacro:so101_control_joint  variant="${variant}" joint="wrist_roll"/>
-            <xacro:so101_control_joint  variant="${variant}" joint="gripper"/>
+            <xacro:so101_control_joint variant="${variant}" joint="shoulder_pan"  id="1"/>
+            <xacro:so101_control_joint variant="${variant}" joint="shoulder_lift" id="2"/>
+            <xacro:so101_control_joint variant="${variant}" joint="elbow_flex"   id="3"/>
+            <xacro:so101_control_joint variant="${variant}" joint="wrist_flex"   id="4"/>
+            <xacro:so101_control_joint variant="${variant}" joint="wrist_roll"   id="5"/>
+            <xacro:so101_control_joint variant="${variant}" joint="gripper"      id="6"/>
 
         </ros2_control>
     </xacro:macro>
