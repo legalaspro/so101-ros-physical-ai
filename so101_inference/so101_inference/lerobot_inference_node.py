@@ -42,9 +42,10 @@ class LeRobotInferenceNode(Node):
         # Parameters
         # --------------------
         self.declare_parameter(
-            "repo_id", "legalaspro/act-so101-pick-place-cube-30hz-v1"
+            "repo_id",
+            "legalaspro/act_so101_pnp_microsanity_20_50hz_v0",
         )
-        self.declare_parameter("fps", 30.0)
+        self.declare_parameter("fps", 50.0)
         self.declare_parameter("max_age_s", 0.2)
 
         self.declare_parameter("fwd_topic", "/follower/forward_controller/commands")
@@ -89,9 +90,7 @@ class LeRobotInferenceNode(Node):
         config = PreTrainedConfig.from_pretrained(self.repo_id)
         # config.n_action_steps = 50
         # config.temporal_ensemble_coeff = 0.01
-        self.policy = ACTPolicy.from_pretrained(self.repo_id, config=config).to(
-            self.device
-        )
+        self.policy = ACTPolicy.from_pretrained(self.repo_id, config=config).to(self.device)
         self.policy.eval()
         self.policy.reset()
 
@@ -122,18 +121,14 @@ class LeRobotInferenceNode(Node):
         # --------------------
         #  ROS2 Subscribers, Publishers, Timers
         # --------------------
-        self.create_subscription(
-            Image, self.top_camera_topic, self._on_top_image_cb, qos_profile_sensor_data
-        )
+        self.create_subscription(Image, self.top_camera_topic, self._on_top_image_cb, qos_profile_sensor_data)
         self.create_subscription(
             Image,
             self.wrist_camera_topic,
             self._on_wrist_image_cb,
             qos_profile_sensor_data,
         )
-        self.create_subscription(
-            JointState, self.joints_topic, self._on_joints_cb, qos_profile_sensor_data
-        )
+        self.create_subscription(JointState, self.joints_topic, self._on_joints_cb, qos_profile_sensor_data)
 
         self.forward_pub = self.create_publisher(Float64MultiArray, self.fwd_topic, 10)
 
@@ -166,9 +161,7 @@ class LeRobotInferenceNode(Node):
 
         # Cache ordered joints
         pos = msg.position
-        self._latest_joints_vec = np.array(
-            [pos[i] for i in self._joint_idx], dtype=np.float32
-        )
+        self._latest_joints_vec = np.array([pos[i] for i in self._joint_idx], dtype=np.float32)
         self._latest_joints_msg = msg
         self._rx_joints = self.get_clock().now()
 
@@ -184,16 +177,12 @@ class LeRobotInferenceNode(Node):
                 idx.append(name_to_idx[j])
 
         if missing:
-            self.get_logger().error(
-                f"JointState missing joints: {missing}. Available: {list(msg.name)}"
-            )
+            self.get_logger().error(f"JointState missing joints: {missing}. Available: {list(msg.name)}")
             return False
 
         self._joint_idx = idx
         self._joint_idx_ready = True
-        self.get_logger().info(
-            f"Initialized joint indices for {len(idx)} joints: {self.arm_joints}"
-        )
+        self.get_logger().info(f"Initialized joint indices for {len(idx)} joints: {self.arm_joints}")
         return True
 
     def _data_ready(self) -> bool:
