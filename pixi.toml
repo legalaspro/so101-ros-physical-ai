@@ -10,10 +10,11 @@ python = "3.12.*"
 pyyaml = ">=6.0.3,<7"
 numpy = ">=2.4.2,<3"
 gradio = ">=6.5.1,<7"
-rerun-sdk = ">=0.29.2,<0.30"
 
 [feature.bridge.pypi-dependencies]
-gradio-rerun = ">=0.29.1, <0.30"
+#gradio-rerun = ">=0.29.1, <0.30"
+rerun-sdk = ">=0.30.0, <0.31"
+
 
 [feature.bridge.tasks]
 # Run the bridge in a ROS-aware shell:
@@ -39,12 +40,18 @@ ffmpeg = "*"
 
 [feature.lerobot.pypi-dependencies]
 lerobot = "*"
+grpcio = "*"
+grpcio-tools = "*"
+msgpack = "*"
+zmq = "*"
 parquet-tools = ">=0.2.16, <0.3"
 
 [feature.lerobot.tasks]
 lerobot-info = "lerobot-info"
 convert = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true; if [ \"${1-}\" = \"--\" ]; then shift; fi; exec python -m rosbag_to_lerobot.cli \"$@\"' --" }
 infer = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true; if [ \"${1-}\" = \"--\" ]; then shift; fi; exec python -m so101_inference.lerobot_inference_node \"$@\"' --" }
+async_infer = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true; if [ \"${1-}\" = \"--\" ]; then shift; fi; exec python -m so101_inference.async_inference_node \"$@\"' --" }
+
 
 # --- Environments ---
 [environments]
