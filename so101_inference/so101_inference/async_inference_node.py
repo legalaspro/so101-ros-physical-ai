@@ -86,6 +86,7 @@ class AsyncRos2InferenceClient(Node):
         self.declare_parameter("fps", 50.0)
         self.declare_parameter("max_age_s", 0.2)
         self.declare_parameter("task", "Put the green cube in the cup.")
+        self.declare_parameter("aggregate_fn_name", "weighted_average")
 
         self.declare_parameter("fwd_topic", "/follower/forward_controller/commands")
         self.declare_parameter("joints_topic", "/follower/joint_states")
@@ -119,6 +120,7 @@ class AsyncRos2InferenceClient(Node):
             fps=float(self.get_parameter("fps").value),
             max_age_s=float(self.get_parameter("max_age_s").value),
             task=str(self.get_parameter("task").value),
+            aggregate_fn_name=str(self.get_parameter("aggregate_fn_name").value),
         )
 
         self.fwd_topic = str(self.get_parameter("fwd_topic").value)

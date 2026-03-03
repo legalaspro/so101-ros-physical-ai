@@ -315,7 +315,7 @@ class AsyncInferenceClient:
 
         self._actions_executed_count += 1
 
-        self._log.info(
+        self._log.debug(
             f"🎯 ACTION #{timed_action.get_timestep()} EXECUTED | "
             f"prev_latest={prev_latest} | queue={pre_size}→{post_size} | "
             f"total_executed={self._actions_executed_count}"
