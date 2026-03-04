@@ -24,19 +24,11 @@ from typing import Any
 import cv2
 import numpy as np
 import torch
-
 from lerobot.async_inference.constants import SUPPORTED_POLICIES
 from lerobot.async_inference.helpers import (
-    FPSTracker,
-    Observation,
-    RemotePolicyConfig,
-    TimedAction,
-    TimedObservation,
-    extract_state_from_raw_observation,
-    get_logger,
-    is_image_key,
-    make_lerobot_observation,
-)
+    FPSTracker, Observation, RemotePolicyConfig, TimedAction, TimedObservation,
+    extract_state_from_raw_observation, get_logger, is_image_key,
+    make_lerobot_observation)
 from lerobot.policies.factory import get_policy_class, make_pre_post_processors
 from lerobot.processor import PolicyAction, PolicyProcessorPipeline
 from lerobot.utils.constants import OBS_STATE
@@ -287,10 +279,9 @@ class InferenceEngine:
 
         # 1. Prepare observation
         start_prepare = time.perf_counter()
-        observation: Observation = raw_observation_to_observation(
+        observation: Observation = _raw_observation_to_observation(
             raw_obs,
             self.lerobot_features,
-            self.policy_image_features,
         )
         prepare_time = time.perf_counter() - start_prepare
 
