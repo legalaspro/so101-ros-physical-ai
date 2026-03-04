@@ -12,12 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Shared inference engine — single source of truth for the inference pipeline.
-
-Extracted from ``policy_server.py`` and ``zmq_server.py`` to eliminate
-duplicated logic.  Both the gRPC and ZMQ servers delegate to this class.
-"""
-
 from __future__ import annotations
 
 import logging
@@ -38,14 +32,14 @@ from lerobot.async_inference.helpers import (
     RemotePolicyConfig,
     TimedAction,
     TimedObservation,
-    get_logger,
-    make_lerobot_observation,
     extract_state_from_raw_observation,
-    raw_observation_to_observation,
+    get_logger,
+    is_image_key,
+    make_lerobot_observation,
 )
 from lerobot.policies.factory import get_policy_class, make_pre_post_processors
 from lerobot.processor import PolicyAction, PolicyProcessorPipeline
-
+from lerobot.utils.constants import OBS_STATE
 
 logger = get_logger("inference_engine", log_to_file=False)
 
@@ -74,6 +68,36 @@ def _decode_compressed_images(raw_obs: dict) -> dict:
         if isinstance(value, (bytes, bytearray)):
             raw_obs[key] = _decode_jpeg_to_rgb(value)
     return raw_obs
+
+
+def _raw_observation_to_observation(
+    raw_observation: dict,
+    lerobot_features: dict[str, dict],
+) -> Observation:
+    """Convert raw robot observation to policy-ready tensors.
+
+    Unlike the upstream ``raw_observation_to_observation`` this does **not**
+    resize images.  VLA policies (SmolVLA, Pi0, …) handle resizing internally
+    (e.g. ``resize_with_pad``).  Pre-resizing here would distort the aspect
+    ratio and create a train / inference mismatch.
+    See: https://github.com/huggingface/lerobot/issues/2475
+    """
+    lerobot_obs = make_lerobot_observation(raw_observation, lerobot_features)
+
+    image_keys = list(filter(is_image_key, lerobot_obs))
+    state_dict = {OBS_STATE: extract_state_from_raw_observation(lerobot_obs)}
+
+    # HWC → CHW permute, uint8 → float32 [0,1], add batch dim — no resize
+    image_dict = {}
+    for key in image_keys:
+        img = torch.tensor(lerobot_obs[key]).permute(2, 0, 1)  # (H,W,C) → (C,H,W)
+        img = img.to(dtype=torch.float32).div_(255).contiguous()  # [0,255] → [0,1]
+        image_dict[key] = img.unsqueeze(0)  # (1,C,H,W)
+
+    if "task" in raw_observation:
+        state_dict["task"] = raw_observation["task"]
+
+    return {**state_dict, **image_dict}
 
 
 def _compare_observation_states(obs1_state: torch.Tensor, obs2_state: torch.Tensor, atol: float) -> bool:
