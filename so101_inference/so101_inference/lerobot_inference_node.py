@@ -22,7 +22,7 @@ from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, JointState
 from std_msgs.msg import Float64MultiArray
 
-
+import time
 import torch
 import numpy as np
 from copy import copy
@@ -30,6 +30,7 @@ from copy import copy
 from so101_inference.utils import ros2_image_to_numpy
 
 from lerobot.policies.act.modeling_act import ACTPolicy
+from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
 from lerobot.configs.policies import PreTrainedConfig
 from lerobot.policies.factory import make_pre_post_processors
 
@@ -45,6 +46,8 @@ class LeRobotInferenceNode(Node):
             "repo_id",
             "legalaspro/act_so101_pnp_microsanity_20_50hz_v0",
         )
+        self.declare_parameter("policy_type", "act")
+        self.declare_parameter("task", "Put the green cube in the cup.")
         self.declare_parameter("fps", 50.0)
         self.declare_parameter("max_age_s", 0.2)
 
@@ -52,6 +55,10 @@ class LeRobotInferenceNode(Node):
         self.declare_parameter("joints_topic", "/follower/joint_states")
         self.declare_parameter("top_camera_topic", "/static_camera/image_raw")
         self.declare_parameter("wrist_camera_topic", "/follower/image_raw")
+
+        # Camera names as the policy expects them in observation keys
+        self.declare_parameter("camera_top_name", "top")
+        self.declare_parameter("camera_wrist_name", "wrist")
 
         self.declare_parameter(
             "arm_joints",
@@ -67,6 +74,8 @@ class LeRobotInferenceNode(Node):
 
         # Read parameters
         self.repo_id = str(self.get_parameter("repo_id").value)
+        self.policy_type = str(self.get_parameter("policy_type").value)
+        self.task = str(self.get_parameter("task").value)
         self.fps = float(self.get_parameter("fps").value)
         self.max_age_s = float(self.get_parameter("max_age_s").value)
 
@@ -76,6 +85,9 @@ class LeRobotInferenceNode(Node):
         self.wrist_camera_topic = str(self.get_parameter("wrist_camera_topic").value)
 
         self.arm_joints = list(self.get_parameter("arm_joints").value)
+
+        self._cam_top = str(self.get_parameter("camera_top_name").value)
+        self._cam_wrist = str(self.get_parameter("camera_wrist_name").value)
 
         if self.fps <= 0:
             self.get_logger().warn(f"Invalid fps={self.fps}; forcing 30.0")
@@ -90,7 +102,10 @@ class LeRobotInferenceNode(Node):
         config = PreTrainedConfig.from_pretrained(self.repo_id)
         # config.n_action_steps = 50
         # config.temporal_ensemble_coeff = 0.01
-        self.policy = ACTPolicy.from_pretrained(self.repo_id, config=config).to(self.device)
+        if self.policy_type == "act":
+            self.policy = ACTPolicy.from_pretrained(self.repo_id, config=config).to(self.device)
+        else:
+            self.policy = SmolVLAPolicy.from_pretrained(self.repo_id, config=config).to(self.device)
         self.policy.eval()
         self.policy.reset()
 
@@ -131,6 +146,12 @@ class LeRobotInferenceNode(Node):
         self.create_subscription(JointState, self.joints_topic, self._on_joints_cb, qos_profile_sensor_data)
 
         self.forward_pub = self.create_publisher(Float64MultiArray, self.fwd_topic, 10)
+
+        # --------------------
+        # Timing
+        # --------------------
+        self._inference_count = 0
+        self._chunk_count = 0
 
         # TIMER LOOP
         period = 1.0 / self.fps
@@ -216,8 +237,9 @@ class LeRobotInferenceNode(Node):
         wrist_rgb = ros2_image_to_numpy(self._latest_wrist_img)  # HxWx3 uint8 RGB
         return {
             "observation.state": self._latest_joints_vec,  # (6,) float32
-            "observation.images.top": top_rgb,
-            "observation.images.wrist": wrist_rgb,
+            f"observation.images.{self._cam_top}": top_rgb,
+            f"observation.images.{self._cam_wrist}": wrist_rgb,
+            "task": self.task,
         }
 
     def inference_loop(self):
@@ -228,13 +250,16 @@ class LeRobotInferenceNode(Node):
         if not self._is_data_fresh():
             return
 
+        t0 = time.perf_counter()
+
         observation = self._build_observation()
 
         with torch.inference_mode():
             # Convert numpy → tensor, normalize images, add batch dim, move to device
             obs = copy(observation)
             for name in obs:
-                obs[name] = torch.from_numpy(obs[name])
+                if isinstance(obs[name], np.ndarray):
+                    obs[name] = torch.from_numpy(obs[name])
                 if "image" in name:
                     obs[name] = obs[name].float() / 255.0
                     obs[name] = obs[name].permute(2, 0, 1).contiguous()
@@ -250,6 +275,22 @@ class LeRobotInferenceNode(Node):
         msg = Float64MultiArray()
         msg.data = action
         self.forward_pub.publish(msg)
+
+        elapsed_ms = (time.perf_counter() - t0) * 1000
+        self._inference_count += 1
+
+        # n_action_steps actions per chunk; log once per chunk
+        n = self.policy.config.n_action_steps
+        if self._inference_count % n == 1 or n == 1:
+            self._chunk_count += 1
+            self._chunk_forward_ms = elapsed_ms
+            self._chunk_start = time.perf_counter()
+        elif self._inference_count % n == 0:
+            chunk_wall_ms = (time.perf_counter() - self._chunk_start) * 1000
+            self.get_logger().info(
+                f"⏱️ chunk #{self._chunk_count} | forward={self._chunk_forward_ms:.1f}ms | "
+                f"{n} actions in {chunk_wall_ms:.1f}ms wall"
+            )
 
 
 def main(args=None) -> None:

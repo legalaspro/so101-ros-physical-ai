@@ -39,7 +39,7 @@ numpy = ">=2.4.2,<3"
 ffmpeg = "*"
 
 [feature.lerobot.pypi-dependencies]
-lerobot = "*"
+lerobot = { version = ">=0.4.4, <0.5", extras = ["smolvla"] }
 grpcio = "*"
 grpcio-tools = "*"
 msgpack = "*"
