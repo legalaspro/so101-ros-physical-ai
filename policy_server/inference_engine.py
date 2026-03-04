@@ -27,6 +27,8 @@ from dataclasses import dataclass, field
 from queue import Empty, Queue
 from typing import Any
 
+import cv2
+import numpy as np
 import torch
 
 from lerobot.async_inference.constants import SUPPORTED_POLICIES
@@ -51,6 +53,27 @@ logger = get_logger("inference_engine", log_to_file=False)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _decode_jpeg_to_rgb(jpeg_bytes: bytes) -> np.ndarray:
+    """Decode JPEG bytes to an RGB uint8 numpy array (H, W, 3)."""
+    buf = np.frombuffer(jpeg_bytes, dtype=np.uint8)
+    bgr = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+    if bgr is None:
+        raise ValueError("cv2.imdecode failed — invalid JPEG data")
+    return np.ascontiguousarray(bgr[:, :, ::-1], dtype=np.uint8)  # BGR → RGB
+
+
+def _decode_compressed_images(raw_obs: dict) -> dict:
+    """In-place: replace any ``bytes`` values (JPEG) with decoded numpy arrays.
+
+    Non-bytes values are left unchanged so the function is safe to call
+    even when no compressed images are present.
+    """
+    for key, value in raw_obs.items():
+        if isinstance(value, (bytes, bytearray)):
+            raw_obs[key] = _decode_jpeg_to_rgb(value)
+    return raw_obs
 
 
 def _compare_observation_states(obs1_state: torch.Tensor, obs2_state: torch.Tensor, atol: float) -> bool:
@@ -235,10 +258,13 @@ class InferenceEngine:
 
     def _predict_action_chunk(self, observation_t: TimedObservation) -> list[TimedAction]:
         """Full inference pipeline: prepare → preprocess → infer → postprocess → time."""
+        # 0. Decode any compressed (JPEG) images to numpy arrays
+        raw_obs = _decode_compressed_images(observation_t.get_observation())
+
         # 1. Prepare observation
         start_prepare = time.perf_counter()
         observation: Observation = raw_observation_to_observation(
-            observation_t.get_observation(),
+            raw_obs,
             self.lerobot_features,
             self.policy_image_features,
         )
