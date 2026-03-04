@@ -4,8 +4,8 @@ ROS 2 inference package for the SO-101 robot arm. Runs [LeRobot](https://github.
 
 ## Features
 
-- **Synchronous (local) inference** — loads the policy on the robot's own GPU/CPU and runs forward passes in a tight control loop. Supports both ACT and SmolVLA policies.
-- **Asynchronous (remote) inference** — offloads the policy to a remote server via ZeroMQ or gRPC, while the robot keeps executing actions from a local queue. Supports all policy types (ACT, SmolVLA, and any future policies). Ideal for large VLA models that don't fit on the robot's device.
+- **Synchronous (local) inference** — loads the policy on the robot's own GPU/CPU and runs forward passes in a tight control loop. Supports ACT and SmolVLA policies.
+- **Asynchronous (remote) inference** — offloads the policy to a remote server via ZeroMQ or gRPC, while the robot keeps executing actions from a local queue. Supports any LeRobot policy (ACT, SmolVLA, π₀, and others) since inference runs server-side. Ideal for large VLA models that don't fit on the robot's device.
 - **Configurable camera names** — different policies expect different camera observation keys (e.g. ACT may use `top`/`wrist` while VLAs like SmolVLA typically use `camera1`/`camera2`). The `camera_top_name` and `camera_wrist_name` parameters let you match whatever names the policy was trained with, without changing topics or re-training.
 - **Action chunking & aggregation** — the async node manages an action queue with configurable chunk sizes, refill thresholds, and aggregation strategies (`weighted_average`, `latest_only`, `average`, `conservative`).
 - **Compressed image support** — the async node can subscribe to `CompressedImage` topics and forward raw JPEG bytes to the server (decoded server-side) for lower bandwidth usage.

@@ -9,7 +9,7 @@
 
 Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, and live Rerun visualization — all on real hardware.
 
-> **Status:** actively developed — teleop, episode recording, visualization, LeRobot dataset conversion, and policy inference (ACT) are working. Next up: more policies (SmolVLA, π₀, …). PRs and issues welcome.
+> **Status:** actively developed — teleop, episode recording, visualization, LeRobot dataset conversion, and policy inference are working. Sync inference supports ACT and SmolVLA on-device; async inference supports any LeRobot policy (ACT, SmolVLA, π₀, …) via a remote GPU server. PRs and issues welcome.
 
 ---
 
@@ -23,7 +23,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 | **Multi-Camera Pipeline**         | USB cameras and RealSense D400 series with configurable TF placement                         |
 | **Episode Recording**             | Record joint states + camera frames into timestamped episodes for imitation learning         |
 | **Rerun Visualization**           | Live visualization of observations, actions, and camera feeds via ROS-to-Rerun bridge (Pixi) |
-| **Policy Inference (ACT)**        | Run trained policies from LeRobot on the follower arm in real time via ROS 2                 |
+| **Policy Inference**              | Sync: ACT & SmolVLA on-device. Async: any LeRobot policy (ACT, SmolVLA, π₀, …) offloaded to a remote GPU server via ZMQ/gRPC |
 | **URDF/Xacro Model**              | Full SO-101 description with STL meshes, separate leader/follower end-effectors              |
 
 ---
@@ -38,7 +38,8 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 | `so101_moveit_config` | YAML/Python     | MoveIt 2 config: SRDF, OMPL planning, joint limits, kinematics, controllers                      |
 | `episode_recorder`    | C++             | Minimalistic rosbag (MCAP) recorder with configurable topics and keyboard-driven episode control |
 | `rosbag_to_lerobot`   | Python          | Convert rosbag episodes to [LeRobot](https://github.com/huggingface/lerobot) v3.0 datasets (local or Hub) — runs in Pixi `lerobot` env |
-| `so101_inference`     | Python          | LeRobot policy inference node (ACT) — subscribes to cameras + joint states, publishes actions via forward controller (runs in Pixi `lerobot` env) |
+| `so101_inference`     | Python          | Policy inference — sync (ACT, SmolVLA on-device) and async (any LeRobot policy via remote GPU server). See [so101_inference README](so101_inference/README.md) |
+| `policy_server`       | Python          | GPU-side inference server — loads any LeRobot policy and serves actions over ZMQ or gRPC. Runs on a remote machine (e.g. vast.ai). See [policy_server README](policy_server/README.md) |
 | `feetech_ros2_driver` | C++             | **Submodule** — Feetech STS3215 ros2_control hardware interface                                  |
 | `scripts/`            | Python          | `so101_ros2_to_rerun.py` — ROS 2 to Rerun bridge (runs inside Pixi env)                          |
 
@@ -258,9 +259,9 @@ lerobot-train \
 
 Optional flags: `--wandb.enable=true`, `--policy.repo_id=<hf-username>/<policy-name>` (auto-push checkpoint to Hub). See the [LeRobot training docs](https://huggingface.co/docs/lerobot/il_robots#train-a-policy) for the full list of options.
 
-### Policy Inference — ACT (LeRobot)
+### Policy Inference (LeRobot)
 
-Deploy a trained [ACT](https://huggingface.co/docs/lerobot/act) policy on the real SO-101 follower arm. The inference pipeline is split into two processes so that the ROS 2 hardware stack and the LeRobot policy run in their own environments:
+Deploy trained LeRobot policies on the real SO-101 follower arm. Two inference modes are available — **synchronous** (ACT, SmolVLA on-device) and **asynchronous** (any LeRobot policy — ACT, SmolVLA, π₀, and others — offloaded to a remote GPU server via ZMQ/gRPC). See the full [so101_inference README](so101_inference/README.md) for all parameters and details.
 
 **Terminal 1 — bring up the follower arm + cameras (+ optional Rerun):**
 
@@ -273,24 +274,29 @@ ros2 launch so101_bringup inference.launch.py
 
 ```bash
 cd ~/ros2_ws/src/so101-ros-physical-ai
-pixi run -e lerobot infer
+
+# Synchronous — ACT policy on-device
+pixi run -e lerobot infer -- --ros-args \
+    -p repo_id:="legalaspro/act_so101_pnp_crosslane_showcase_60_50hz_v0"
+
+# Synchronous — SmolVLA on-device
+pixi run -e lerobot infer -- --ros-args \
+    -p repo_id:="legalaspro/smolvla_so101_pnp_crosslane_showcase_60_50hz_v0" \
+    -p policy_type:=smolvla \
+    -p camera_top_name:=camera1 -p camera_wrist_name:=camera2
+
+# Asynchronous — SmolVLA offloaded to a remote GPU server
+pixi run -e lerobot async_infer -- --ros-args \
+    -p repo_id:="legalaspro/smolvla_so101_pnp_crosslane_showcase_60_50hz_v0" \
+    -p policy_type:=smolvla \
+    -p server_address:=192.168.1.100:8090 \
+    -p fps:=50.0 -p actions_per_chunk:=50 -p chunk_size_threshold:=0.6 \
+    -p camera_top_name:=camera1 -p camera_wrist_name:=camera2
 ```
 
-The `infer` task sources ROS 2, then launches `so101_inference.lerobot_inference_node` inside the Pixi `lerobot` environment where PyTorch and LeRobot are available. The node:
-
-1. Downloads the policy checkpoint from the Hugging Face Hub (default: `legalaspro/act-so101-pick-place-cube-30hz-v1`).
-2. Subscribes to `/follower/joint_states`, `/static_camera/image_raw`, and `/follower/image_raw`.
-3. Runs inference at 30 Hz and publishes actions to `/follower/forward_controller/commands`.
-
-Common overrides (pass as ROS parameters):
+Common overrides:
 
 ```bash
-# Use a different policy checkpoint
-pixi run -e lerobot infer --ros-args -p repo_id:=<hf-username>/<policy-repo>
-
-# Change inference rate
-pixi run -e lerobot infer --ros-args -p fps:=15.0
-
 # Disable Rerun in the launch file
 ros2 launch so101_bringup inference.launch.py use_rerun:=false
 ```
