@@ -27,7 +27,7 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import Image, JointState
+from sensor_msgs.msg import CompressedImage, Image, JointState
 from std_msgs.msg import Float64MultiArray
 
 from so101_inference.async_client import AsyncInferenceClient, ClientCfg
@@ -85,7 +85,7 @@ class AsyncRos2InferenceClient(Node):
         self.declare_parameter("chunk_size_threshold", 0.5)
         self.declare_parameter("fps", 50.0)
         self.declare_parameter("max_age_s", 0.2)
-        self.declare_parameter("task", "Put the green cube in the cup.")
+        self.declare_parameter("task", "put the green cube in the cup")
         self.declare_parameter("aggregate_fn_name", "weighted_average")
 
         self.declare_parameter("fwd_topic", "/follower/forward_controller/commands")
@@ -96,6 +96,10 @@ class AsyncRos2InferenceClient(Node):
         # Camera names as the policy expects them in observation keys
         self.declare_parameter("camera_top_name", "top")
         self.declare_parameter("camera_wrist_name", "wrist")
+
+        # When True, subscribe to CompressedImage topics and forward
+        # raw JPEG bytes to the server (decoded server-side).
+        self.declare_parameter("use_compressed", False)
 
         self.declare_parameter(
             "arm_joints",
@@ -131,6 +135,7 @@ class AsyncRos2InferenceClient(Node):
 
         self._cam_top = str(self.get_parameter("camera_top_name").value)
         self._cam_wrist = str(self.get_parameter("camera_wrist_name").value)
+        self._use_compressed = bool(self.get_parameter("use_compressed").value)
 
         if cfg.fps <= 0:
             self.get_logger().warn(f"Invalid fps={cfg.fps}; forcing 30.0")
@@ -166,6 +171,8 @@ class AsyncRos2InferenceClient(Node):
         # --------------------
         self._latest_top_img: Image | None = None
         self._latest_wrist_img: Image | None = None
+        self._latest_top_jpeg: bytes | None = None
+        self._latest_wrist_jpeg: bytes | None = None
         self._latest_joints_msg: JointState | None = None
         self._rx_top = None
         self._rx_wrist = None
@@ -178,13 +185,36 @@ class AsyncRos2InferenceClient(Node):
         # --------------------
         #  ROS2 Subscribers, Publishers, Timers
         # --------------------
-        self.create_subscription(Image, self.top_camera_topic, self._on_top_image_cb, qos_profile_sensor_data)
-        self.create_subscription(
-            Image,
-            self.wrist_camera_topic,
-            self._on_wrist_image_cb,
-            qos_profile_sensor_data,
-        )
+        if self._use_compressed:
+            # Subscribe to CompressedImage topics — store raw JPEG bytes
+            top_compressed = self.top_camera_topic + "/compressed"
+            wrist_compressed = self.wrist_camera_topic + "/compressed"
+            self.create_subscription(
+                CompressedImage,
+                top_compressed,
+                self._on_top_compressed_cb,
+                qos_profile_sensor_data,
+            )
+            self.create_subscription(
+                CompressedImage,
+                wrist_compressed,
+                self._on_wrist_compressed_cb,
+                qos_profile_sensor_data,
+            )
+            self._log.info(f"📷 Using COMPRESSED images: {top_compressed}, {wrist_compressed}")
+        else:
+            self.create_subscription(
+                Image,
+                self.top_camera_topic,
+                self._on_top_image_cb,
+                qos_profile_sensor_data,
+            )
+            self.create_subscription(
+                Image,
+                self.wrist_camera_topic,
+                self._on_wrist_image_cb,
+                qos_profile_sensor_data,
+            )
         self.create_subscription(JointState, self.joints_topic, self._on_joints_cb, qos_profile_sensor_data)
 
         self.forward_pub = self.create_publisher(Float64MultiArray, self.fwd_topic, 10)
@@ -224,6 +254,14 @@ class AsyncRos2InferenceClient(Node):
         self._latest_wrist_img = msg
         self._rx_wrist = self.get_clock().now()
 
+    def _on_top_compressed_cb(self, msg: CompressedImage):
+        self._latest_top_jpeg = bytes(msg.data)
+        self._rx_top = self.get_clock().now()
+
+    def _on_wrist_compressed_cb(self, msg: CompressedImage):
+        self._latest_wrist_jpeg = bytes(msg.data)
+        self._rx_wrist = self.get_clock().now()
+
     def _on_joints_cb(self, msg: JointState):
         if not self._joint_idx_ready:
             if not self._initialize_joint_indices(msg):
@@ -255,9 +293,15 @@ class AsyncRos2InferenceClient(Node):
     # ---------------------------------
 
     def _data_ready(self) -> bool:
+        if self._use_compressed:
+            top_ok = self._latest_top_jpeg is not None
+            wrist_ok = self._latest_wrist_jpeg is not None
+        else:
+            top_ok = self._latest_top_img is not None
+            wrist_ok = self._latest_wrist_img is not None
         return (
-            self._latest_top_img is not None
-            and self._latest_wrist_img is not None
+            top_ok
+            and wrist_ok
             and self._latest_joints_vec is not None
             and self._rx_top is not None
             and self._rx_wrist is not None
@@ -289,12 +333,21 @@ class AsyncRos2InferenceClient(Node):
         return ages
 
     def _build_raw_observation(self) -> dict:
-        top_rgb = ros2_image_to_numpy(self._latest_top_img)
-        wrist_rgb = ros2_image_to_numpy(self._latest_wrist_img)
         j = self._latest_joints_vec
-
         joints_str = " ".join(f"{v:+.4f}" for v in j)
-        self._log.debug(f"  obs joints: [{joints_str}] | top_img={top_rgb.shape} wrist_img={wrist_rgb.shape}")
+
+        if self._use_compressed:
+            top_data = self._latest_top_jpeg  # raw JPEG bytes
+            wrist_data = self._latest_wrist_jpeg
+            self._log.debug(
+                f"  obs joints: [{joints_str}] | top_jpeg={len(top_data)}B wrist_jpeg={len(wrist_data)}B"
+            )
+        else:
+            top_data = ros2_image_to_numpy(self._latest_top_img)
+            wrist_data = ros2_image_to_numpy(self._latest_wrist_img)
+            self._log.debug(
+                f"  obs joints: [{joints_str}] | top_img={top_data.shape} wrist_img={wrist_data.shape}"
+            )
 
         return {
             "shoulder_pan.pos": float(j[0]),
@@ -303,8 +356,8 @@ class AsyncRos2InferenceClient(Node):
             "wrist_flex.pos": float(j[3]),
             "wrist_roll.pos": float(j[4]),
             "gripper.pos": float(j[5]),
-            self._cam_top: top_rgb,
-            self._cam_wrist: wrist_rgb,
+            self._cam_top: top_data,
+            self._cam_wrist: wrist_data,
             "task": self.cfg.task,
         }
 
@@ -319,10 +372,16 @@ class AsyncRos2InferenceClient(Node):
         # Require data
         if not self._data_ready():
             if self.client._control_loop_count % 100 == 0:
+                if self._use_compressed:
+                    top_ok = self._latest_top_jpeg is not None
+                    wrist_ok = self._latest_wrist_jpeg is not None
+                else:
+                    top_ok = self._latest_top_img is not None
+                    wrist_ok = self._latest_wrist_img is not None
                 self._log.warn(
                     f"⏳ Waiting for sensor data... "
-                    f"top={'✓' if self._latest_top_img else '✗'} "
-                    f"wrist={'✓' if self._latest_wrist_img else '✗'} "
+                    f"top={'✓' if top_ok else '✗'} "
+                    f"wrist={'✓' if wrist_ok else '✗'} "
                     f"joints={'✓' if self._latest_joints_vec is not None else '✗'}"
                 )
             return
