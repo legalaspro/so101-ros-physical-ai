@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import threading
 from dataclasses import dataclass
 from typing import Optional
 
@@ -12,23 +13,25 @@ import rerun.blueprint as rrb
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data, QoSProfile
+from rclpy.qos import QoSProfile, qos_profile_sensor_data
 from rclpy.time import Time
-from sensor_msgs.msg import CompressedImage, JointState, Image
+from sensor_msgs.msg import CompressedImage, Image, JointState
 from std_msgs.msg import Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory
-
 
 # LeRobot-style constants
 OBS_STR = "observation"
 ACTION_STR = "action"
 
+
 def stamp_to_datetime64(stamp) -> np.datetime64:
     t = Time.from_msg(stamp)
     return np.datetime64(t.nanoseconds, "ns")
 
+
 def time_to_datetime64(t: Time) -> np.datetime64:
     return np.datetime64(t.nanoseconds, "ns")
+
 
 def media_type_from_compressed_format(fmt: str) -> Optional[str]:
     f = (fmt or "").lower()
@@ -39,9 +42,11 @@ def media_type_from_compressed_format(fmt: str) -> Optional[str]:
         return "image/png"
     return None
 
+
 def rgb8_to_numpy(img: Image) -> np.ndarray:
     arr = np.frombuffer(img.data, dtype=np.uint8)
     return arr.reshape(img.height, img.width, 3)  # RGB
+
 
 def log_scalar(path: str, value: float) -> None:
     rr.log(path, rr.Scalars(value))
@@ -57,9 +62,23 @@ class Topics:
 
 
 class So101Ros2ToRerun(Node):
-    def __init__(self, topics: Topics, cmd_joint_order: list[str]) -> None:
+    def __init__(
+        self,
+        topics: Topics,
+        cmd_joint_order: list[str],
+        clear_state_gap_s: float = 2.0,
+    ) -> None:
         super().__init__("so101_ros2_to_rerun")
         self._cmd_joint_order = list(cmd_joint_order)
+        # Timestamp reference for unstamped messages (Float64MultiArray).
+        # Stamped callbacks write here; the action callback reads it.
+        # Protected by _time_lock for thread-safety.
+        self._time_lock = threading.Lock()
+        self._last_ros_time: np.datetime64 | None = None
+        self._last_action_time = np.datetime64(0, "ns")
+        self._clear_state_gap = np.timedelta64(
+            max(0, int(clear_state_gap_s * 1e9)), "ns"
+        )
 
         # Separate callback groups so heavy-ish callbacks don't block each other.
         self._cg_img_wrist = ReentrantCallbackGroup()
@@ -74,37 +93,41 @@ class So101Ros2ToRerun(Node):
                 topics.wrist,
                 self._on_wrist_img,
                 qos_profile_sensor_data,
-                callback_group=self._cg_img_wrist)
+                callback_group=self._cg_img_wrist,
+            )
         else:
             self.create_subscription(
-                Image, 
-                topics.wrist, 
-                self._on_wrist_img_raw, 
+                Image,
+                topics.wrist,
+                self._on_wrist_img_raw,
                 qos_profile_sensor_data,
-                callback_group=self._cg_img_wrist)
-        
-        if self._is_compressed(topics.overhead):    
+                callback_group=self._cg_img_wrist,
+            )
+
+        if self._is_compressed(topics.overhead):
             self.create_subscription(
                 CompressedImage,
                 topics.overhead,
                 self._on_overhead_img,
                 qos_profile_sensor_data,
-                callback_group=self._cg_img_over)
+                callback_group=self._cg_img_over,
+            )
         else:
             self.create_subscription(
-                Image, 
-                topics.overhead, 
-                self._on_overhead_img_raw, 
+                Image,
+                topics.overhead,
+                self._on_overhead_img_raw,
                 qos_profile_sensor_data,
-                callback_group=self._cg_img_over)
-        
+                callback_group=self._cg_img_over,
+            )
 
         self.create_subscription(
             JointState,
             topics.joint_states,
             self._on_joint_states,
             qos_profile_sensor_data,
-            callback_group=self._cg_joints)
+            callback_group=self._cg_joints,
+        )
 
         if topics.forward_commands:
             qos_cmd = QoSProfile(depth=10)
@@ -126,6 +149,18 @@ class So101Ros2ToRerun(Node):
             )
 
         self.get_logger().info("Rerun bridge started.")
+        self.get_logger().info(f"State clear gap threshold: {clear_state_gap_s:.3f}s")
+
+    def _next_action_time(self) -> tuple[np.datetime64, np.datetime64] | None:
+        with self._time_lock:
+            if self._last_ros_time is None:
+                return None
+            ts = self._last_ros_time
+            prev_action_ts = self._last_action_time
+            if ts <= prev_action_ts:
+                ts = prev_action_ts + np.timedelta64(1, "ns")
+            self._last_action_time = ts
+            return ts, prev_action_ts
 
     def _on_wrist_img(self, msg: CompressedImage) -> None:
         rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
@@ -134,7 +169,7 @@ class So101Ros2ToRerun(Node):
             "cameras/cam_wrist",
             rr.EncodedImage(contents=bytes(msg.data), media_type=mt),
         )
-    
+
     def _on_wrist_img_raw(self, img: Image) -> None:
         rr.set_time("ros_time", timestamp=stamp_to_datetime64(img.header.stamp))
         # img_cv = self.cv_bridge.imgmsg_to_cv2(img, desired_encoding="passthrough")  # usually RGB
@@ -151,21 +186,39 @@ class So101Ros2ToRerun(Node):
 
     def _on_overhead_img_raw(self, img: Image) -> None:
         rr.set_time("ros_time", timestamp=stamp_to_datetime64(img.header.stamp))
-        # img_cv = self.cv_bridge.imgmsg_to_cv2(img, desired_encoding="passthrough")  
+        # img_cv = self.cv_bridge.imgmsg_to_cv2(img, desired_encoding="passthrough")
         # rr.log("cameras/cam_overhead", rr.Image(cv_img, color_model="RGB"))
         rr.log("cameras/cam_overhead", rr.Image(rgb8_to_numpy(img), color_model="RGB"))
 
-
     def _on_joint_states(self, msg: JointState) -> None:
-        rr.set_time("ros_time", timestamp=stamp_to_datetime64(msg.header.stamp))
+        ts = stamp_to_datetime64(msg.header.stamp)
+        with self._time_lock:
+            self._last_ros_time = ts
+        rr.set_time("ros_time", timestamp=ts)
         for i, name in enumerate(msg.name):
             if i < len(msg.position):
                 log_scalar(f"state/position/{name}", float(msg.position[i]))
-    
+
     def _on_forward_commands(self, msg: Float64MultiArray) -> None:
-        # Float64MultiArray has no header stamp. Use node clock (ROS time if use_sim_time=true).
-        now = self.get_clock().now()
-        rr.set_time("ros_time", timestamp=time_to_datetime64(now))
+        # Float64MultiArray has no header stamp. Derive time from the latest
+        # stamped ROS message so action/state plots stay aligned.
+        action_time = self._next_action_time()
+        if action_time is None:
+            return
+        ts, prev_action_ts = action_time
+        rr.set_time("ros_time", timestamp=ts)
+
+        gap_s: float | None = None
+        if (
+            self._clear_state_gap > np.timedelta64(0, "ns")
+            and ts - prev_action_ts > self._clear_state_gap
+        ):
+            gap_s = float((ts - prev_action_ts) / np.timedelta64(1, "ms")) / 1000.0
+            self.get_logger().info(
+                f"Clearing state/position after command gap of {gap_s:.3f}s"
+            )
+            rr.log("action/position", rr.Clear(recursive=True))
+            rr.log("state/position", rr.Clear(recursive=True))
 
         data = list(msg.data)
         if not self._cmd_joint_order:
@@ -202,23 +255,40 @@ def main() -> None:
     p.add_argument("--wrist", default="/follower/image_raw/compressed")
     p.add_argument("--overhead", default="/static_camera/image_raw/compressed")
     p.add_argument("--joint-states", default="/follower/joint_states")
-    p.add_argument("--forward-commands", default="/follower/forward_controller/commands")
+    p.add_argument(
+        "--forward-commands", default="/follower/forward_controller/commands"
+    )
     p.add_argument(
         "--cmd-joints",
         nargs="*",
-        default=["shoulder_pan", "shoulder_lift", "elbow_flex", "wrist_flex", "wrist_roll", "gripper"],
+        default=[
+            "shoulder_pan",
+            "shoulder_lift",
+            "elbow_flex",
+            "wrist_flex",
+            "wrist_roll",
+            "gripper",
+        ],
         help="Joint name order matching controller 'joints' param",
-    )   
-    p.add_argument("--joint-trajectory", default="", help="e.g. /follower/trajectory_controller/joint_trajectory")
+    )
+    p.add_argument(
+        "--joint-trajectory",
+        default="",
+        help="e.g. /follower/trajectory_controller/joint_trajectory",
+    )
+    p.add_argument(
+        "--clear-state-gap-s",
+        type=float,
+        default=2.0,
+        help="Clear state/position when commands resume after this many seconds; <=0 disables.",
+    )
 
     args, unknownargs = p.parse_known_args()
 
     # Initialise Rerun recording (no sinks yet — just buffering).
     rr.init("so101_ros2_live")
 
-    # Start gRPC data server, then web viewer that connects to it.
-    # This is the official pattern from the Rerun docs:
-    #   https://ref.rerun.io/docs/python/0.29.1/common/initialization_functions/#rerun.serve_web_viewer
+    # Start a gRPC server and use it as log sink.
     server_uri = rr.serve_grpc()
     rr.serve_web_viewer(connect_to=server_uri)
 
@@ -227,11 +297,15 @@ def main() -> None:
         rrb.Horizontal(
             rrb.Vertical(
                 rrb.Spatial2DView(name="Wrist Camera", origin="cameras/cam_wrist"),
-                rrb.Spatial2DView(name="Overhead Camera", origin="cameras/cam_overhead"),
+                rrb.Spatial2DView(
+                    name="Overhead Camera", origin="cameras/cam_overhead"
+                ),
                 row_shares=[1, 1],
             ),
             rrb.Vertical(
-                rrb.TimeSeriesView(name="State (Joint Positions)", origin="state/position"),
+                rrb.TimeSeriesView(
+                    name="State (Joint Positions)", origin="state/position"
+                ),
                 rrb.TimeSeriesView(name="Action (Commands)", origin="action"),
                 row_shares=[1, 1],
             ),
@@ -251,7 +325,11 @@ def main() -> None:
         joint_trajectory=args.joint_trajectory or None,
     )
 
-    node = So101Ros2ToRerun(topics, cmd_joint_order=args.cmd_joints)
+    node = So101Ros2ToRerun(
+        topics,
+        cmd_joint_order=args.cmd_joints,
+        clear_state_gap_s=args.clear_state_gap_s,
+    )
 
     exec_ = MultiThreadedExecutor()
     exec_.add_node(node)
