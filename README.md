@@ -23,7 +23,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 
 | Teleoperate the robot | Record imitation learning episodes | Run local or remote inference |
 | --- | --- | --- |
-| [<img src="docs/assets/gifs/so101_teleop.gif" alt="SO-101 teleop demo" height="160" />](so101_teleop/README.md) | [<img src="docs/assets/gifs/ros2_episode_recorder.gif" alt="SO-101 episode recorder demo" height="160" />](episode_recorder/README.md) | [<img src="https://img.youtube.com/vi/l6kWDoHxczc/hqdefault.jpg" alt="SO-101 async inference demo" height="160" />](so101_inference/README.md) |
+| [<img src="docs/assets/gifs/so101_teleop.gif" alt="SO-101 teleop demo" width="240" />](so101_teleop/README.md) | [<img src="docs/assets/gifs/ros2_episode_recorder.gif" alt="SO-101 episode recorder demo" width="240" />](episode_recorder/README.md) | [<img src="https://img.youtube.com/vi/l6kWDoHxczc/hqdefault.jpg" alt="SO-101 async inference demo" width="240" />](so101_inference/README.md) |
 | **[Teleop](so101_teleop/README.md)**<br>Mirror the leader arm to the follower with the default and recommended `forward_controller`. | **[Episode recorder](episode_recorder/README.md)**<br>Save synchronized robot + camera episodes with keyboard controls and optional live Rerun. | **[Inference](so101_inference/README.md)**<br>Run ACT and SmolVLA on-device, or offload any LeRobot policy to a remote GPU via [`policy_server`](policy_server/README.md). |
 
 **End-to-end workflow:** [teleoperate the robot](so101_teleop/README.md) → [record episodes](episode_recorder/README.md) → [convert rosbags to LeRobot datasets](rosbag_to_lerobot/README.md) → [train policies](#training-lerobot) → [run learned policies](so101_inference/README.md)
