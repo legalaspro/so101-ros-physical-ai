@@ -1,5 +1,13 @@
 # rosbag_to_lerobot
 
+**Video:** https://www.youtube.com/watch?v=ffXxCkYJ6as
+
+<p>
+  <a href="https://www.youtube.com/watch?v=ffXxCkYJ6as">
+    <img src="../docs/assets/gifs/ros2_lerobot_dataset.gif" alt="ROS 2 to LeRobot dataset conversion demo" height="240" />
+  </a>
+</p>
+
 Convert ROS 2 rosbag episodes (MCAP) into [LeRobot v3.0](https://github.com/huggingface/lerobot) datasets — locally or pushed straight to the Hugging Face Hub.
 
 ## How It Works
