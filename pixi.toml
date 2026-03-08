@@ -12,8 +12,8 @@ numpy = ">=2.4.2,<3"
 gradio = ">=6.5.1,<7"
 
 [feature.bridge.pypi-dependencies]
-#gradio-rerun = ">=0.29.1, <0.30"
-rerun-sdk = ">=0.30.0, <0.31"
+gradio-rerun = ">=0.29.1, <0.30"
+rerun-sdk = ">=0.29.1, <0.30"
 
 
 [feature.bridge.tasks]
