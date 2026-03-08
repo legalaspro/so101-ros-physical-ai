@@ -1,5 +1,13 @@
 # so101_inference
 
+**Video:** https://www.youtube.com/watch?v=fpGmTwjTmzM
+
+<p>
+  <a href="https://www.youtube.com/watch?v=fpGmTwjTmzM">
+    <img src="https://img.youtube.com/vi/fpGmTwjTmzM/hqdefault.jpg" alt="SO-101 inference demo" width="480" />
+  </a>
+</p>
+
 ROS 2 inference package for the SO-101 robot arm. Runs [LeRobot](https://github.com/huggingface/lerobot) policies (ACT, SmolVLA) directly on the robot, consuming camera images and joint states and publishing joint commands at high frequency.
 
 ## Features
