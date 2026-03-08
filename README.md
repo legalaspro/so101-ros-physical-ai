@@ -66,6 +66,11 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 
 After the [hardware setup guide](docs/hardware.md) and [installation](#installation), these are the fastest ways to get a feel for the repo:
 
+> **Important**
+> Do **not** skip **Calibration → ROS Hardware YAML**. Before running teleop / recording / inference on real hardware, you must copy your LeRobot calibration values into `so101_bringup/config/hardware/leader_joints.yaml` and `so101_bringup/config/hardware/follower_joints.yaml`.
+>
+> **[→ See `docs/hardware.md` → `5. Calibration → ROS Hardware YAML (Required per Robot)`](docs/hardware.md#5-calibration--ros-hardware-yaml-required-per-robot)**
+
 1. **Teleoperate the robot**
 
    ```bash
