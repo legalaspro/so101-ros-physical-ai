@@ -17,7 +17,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
   </a>
 </p>
 
-**Hero demo:** run async policy inference on the real SO-101 arm with a ROS 2 client on the robot and the policy hosted on a remote GPU server.
+**Main demo:** run async policy inference on the real SO-101 arm with a ROS 2 client on the robot and the policy hosted on a remote GPU server via `policy_server`, including ACT and VLA-style LeRobot models trained on datasets collected with this repo's end-to-end pipeline.
 
 ## What you can do with this repo
 
