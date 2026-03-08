@@ -7,9 +7,63 @@
 [![MoveIt 2](https://img.shields.io/badge/MoveIt%202-Motion%20Planning-orange)](https://moveit.ros.org/)
 [![Rerun](https://img.shields.io/badge/Rerun-Visualization-purple)](https://www.rerun.io/)
 
-Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, and live Rerun visualization — all on real hardware.
+Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration. Feetech STS3215 servo driver via ros2_control, leader-to-follower teleoperation, MoveIt 2 motion planning, multi-camera support, episode recording for imitation learning, conversion to LeRobot datasets, policy training, policy inference, and live Rerun visualization — all on real hardware.
 
-> **Status:** actively developed — teleop, episode recording, visualization, LeRobot dataset conversion, and policy inference are working. Sync inference supports ACT and SmolVLA on-device; async inference supports any LeRobot policy (ACT, SmolVLA, π₀, …) via a remote GPU server. PRs and issues welcome.
+> Sync inference supports ACT and SmolVLA on-device; async inference supports any LeRobot policy via `policy_server`. PRs and issues welcome.
+
+<p>
+  <a href="https://www.youtube.com/watch?v=l6kWDoHxczc">
+    <img src="https://img.youtube.com/vi/l6kWDoHxczc/hqdefault.jpg" alt="SO-101 async inference demo" width="720" />
+  </a>
+</p>
+
+**Hero demo:** run async policy inference on the real SO-101 arm with a ROS 2 client on the robot and the policy hosted on a remote GPU server.
+
+## What you can do with this repo
+
+| Teleoperate the robot | Record imitation learning episodes | Run local or remote inference |
+| --- | --- | --- |
+| [<img src="docs/assets/gifs/so101_teleop.gif" alt="SO-101 teleop demo" height="160" />](so101_teleop/README.md) | [<img src="docs/assets/gifs/ros2_episode_recorder.gif" alt="SO-101 episode recorder demo" height="160" />](episode_recorder/README.md) | [<img src="https://img.youtube.com/vi/l6kWDoHxczc/hqdefault.jpg" alt="SO-101 async inference demo" height="160" />](so101_inference/README.md) |
+| **[Teleop](so101_teleop/README.md)**<br>Mirror the leader arm to the follower with the default and recommended `forward_controller`. | **[Episode recorder](episode_recorder/README.md)**<br>Save synchronized robot + camera episodes with keyboard controls and optional live Rerun. | **[Inference](so101_inference/README.md)**<br>Run ACT and SmolVLA on-device, or offload any LeRobot policy to a remote GPU via [`policy_server`](policy_server/README.md). |
+
+**End-to-end workflow:** [teleoperate the robot](so101_teleop/README.md) → [record episodes](episode_recorder/README.md) → [convert rosbags to LeRobot datasets](rosbag_to_lerobot/README.md) → [train policies](#training-lerobot) → [run learned policies](so101_inference/README.md)
+
+## Best first things to try
+
+After the [hardware setup guide](docs/hardware.md) and [installation](#installation), these are the fastest ways to get a feel for the repo:
+
+1. **Teleoperate the robot**
+
+   ```bash
+   ros2 launch so101_bringup teleop.launch.py
+   ```
+
+2. **Record a demonstration episode**
+
+   ```bash
+   ros2 launch so101_bringup recording_session.launch.py \
+     experiment_name:=pick_and_place \
+     task:="Pick up the cube and place it in the container." \
+     use_rerun:=true
+   ```
+
+3. **Convert recorded episodes into a LeRobot dataset**
+
+   ```bash
+   pixi run -e lerobot convert -- \
+     --input-dir ~/.ros/so101_episodes/pick_and_place \
+     --config ~/ros2_ws/src/so101-ros-physical-ai/rosbag_to_lerobot/config/so101.yaml \
+     --repo-id local/so101_test
+   ```
+
+4. **Then dive deeper**
+
+   - [Teleop guide](so101_teleop/README.md)
+   - [Episode recorder guide](episode_recorder/README.md)
+   - [LeRobot dataset conversion](rosbag_to_lerobot/README.md)
+   - [Training with LeRobot](#training-lerobot)
+   - [Policy inference](so101_inference/README.md)
+   - [Remote GPU policy server](policy_server/README.md)
 
 ---
 
@@ -179,8 +233,7 @@ ros2 launch so101_bringup teleop.launch.py use_teleop_rviz:=false
 Record teleoperation episodes for imitation learning. In one terminal, launch the recording session:
 
 ```bash
-ros2 launch so101_bringup recording_session.launch.py experiment_name:=pick_and_place task:="Pick up the cube and place it in the container." 
-# user_rerun:=true
+ros2 launch so101_bringup recording_session.launch.py experiment_name:=pick_and_place task:="Pick up the cube and place it in the container." use_rerun:=true
 ```
 
 In a second terminal, run the interactive keyboard controller:
