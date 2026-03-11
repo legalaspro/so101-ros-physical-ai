@@ -7,7 +7,8 @@ This document focuses on **ROS-side hardware integration**:
 
 - stable device naming (serial + cameras),
 - permissions,
-- transferring LeRobot calibration into this stack.
+- LeRobot motor setup and calibration as prerequisites,
+- optional ROS-side joint overrides when you explicitly want them.
 
 ---
 
@@ -120,44 +121,52 @@ groups | grep -E 'dialout|video'
 
 ---
 
-## 5. Calibration → ROS Hardware YAML (Required per Robot)
+## 5. Calibration, EEPROM, and Optional Joint Config Overrides
 
-LeRobot calibration produces one JSON file per arm containing per-joint:
-`id`, `homing_offset`, `range_min`, `range_max`.
+Before using the real arms from ROS, complete the LeRobot motor setup and calibration steps for both arms. Those steps write the required persistent values to the servo motors, including IDs and calibration-related settings stored in EEPROM.
 
-Transfer these into:
+Servo motors keep persistent values in EEPROM, so those settings survive power cycles and only change when a tool explicitly writes new ones. That means calibration values already stored on the motors can remain the source of truth instead of being duplicated into multiple ROS config files.
 
-| Source (LeRobot JSON)     | Target (ROS YAML)                                    |
-| ------------------------- | ---------------------------------------------------- |
-| leader calibration JSON   | `so101_bringup/config/hardware/leader_joints.yaml`   |
-| follower calibration JSON | `so101_bringup/config/hardware/follower_joints.yaml` |
+### Parameter precedence
 
-LeRobot JSON output (one joint shown):
+**Precedence:** `joint_config_file` overrides `URDF/Xacro` defaults.
 
-```json
-"shoulder_pan": {
-    "id": 1,
-    "drive_mode": 0,
-    "homing_offset": -732,
-    "range_min": 821,
-    "range_max": 3267
-}
+On initialization, the driver writes the resulting values for supported parameters to the motors. If you provide a `joint_config_file`, those values override the URDF/Xacro defaults and replace the older stored values for the same registers.
+
+If you use a `joint_config_file`, each joint entry must:
+
+- include the correct `id`
+- match a joint defined in the `ros2_control` / xacro description
+
+Common parameters:
+
+- `id`: motor ID on the bus
+- `homing_offset`: joint zero alignment, written to the servo EEPROM
+- `range_min` / `range_max`: joint travel limits, written to the servo EEPROM
+- `p_coefficient` / `i_coefficient` / `d_coefficient`, `return_delay_time`, `max_torque_limit`, `protection_current`, `overload_torque`: optional tuning and protection settings written to the servo EEPROM
+- `acceleration`: optional motion parameter used by the driver and not part of LeRobot calibration output
+
+For the follower gripper, this project sets these protection values by default in `so101_description/urdf/ros2_control/so101_ros2_control.xacro` to reduce the risk of overloading or damaging the motor:
+
+- `max_torque_limit: 500`
+- `protection_current: 250`
+- `overload_torque: 25`
+
+LeRobot calibration does not produce these safety values. If needed, you can still override them per robot through `joint_config_file`.
+
+Use `joint_config_file` when you want explicit per-robot overrides, to reapply known-good values during bringup, or to set extra tuning/protection parameters not produced by LeRobot.
+
+Optional override examples live here:
+
+```text
+so101_bringup/config/hardware/
+├── leader_joints.yaml
+├── follower_joints.yaml
+├── lerobot_leader_arm.json
+└── lerobot_follower_arm.json
 ```
 
-ROS YAML schema:
-
-```yaml
-joints:
-  shoulder_pan:
-    id: 1
-    homing_offset: -732
-    range_min: 821
-    range_max: 3267
-    return_delay_time: 0
-    acceleration: 254
-```
-
-The YAML files in this repo are **examples**. Replace values with your calibration output.
+The YAML files in this repo are examples of override files, while the included `lerobot_*.json` files show raw LeRobot calibration output for reference.
 
 ---
 
@@ -179,9 +188,10 @@ Set `video_device` to your udev symlink:
 
 Before launching teleop:
 
+- [ ] LeRobot motor setup and calibration were completed for both arms before first ROS use
 - [ ] Leader / follower udev symlinks exist
 - [ ] User is in `dialout` and `video` groups
-- [ ] `leader_joints.yaml` and `follower_joints.yaml` contain **your** calibration values
+- [ ] If using `joint_config_file`, it points to the intended override YAML with correct joint IDs
 - [ ] Camera `video_device` paths are correct (if using cameras)
 
 Sanity checks:
