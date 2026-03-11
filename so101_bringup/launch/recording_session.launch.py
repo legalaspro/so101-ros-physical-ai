@@ -1,13 +1,20 @@
 """Recording session: arms + cameras + headless episode recorder."""
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.substitutions import FindPackageShare
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    TimerAction,
+)
 from launch.conditions import IfCondition
-from launch.substitutions import EnvironmentVariable
-from launch.actions import ExecuteProcess
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import (
+    EnvironmentVariable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+)
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -154,17 +161,10 @@ def generate_launch_description():
     )
 
     # --- Defaults for files ---
-    default_leader_joint_cfg = PathJoinSubstitution(
-        [FindPackageShare("so101_bringup"), "config", "hardware", "leader_joints.yaml"]
-    )
-    default_follower_joint_cfg = PathJoinSubstitution(
-        [
-            FindPackageShare("so101_bringup"),
-            "config",
-            "hardware",
-            "follower_joints.yaml",
-        ]
-    )
+    default_leader_joint_cfg = ""  # Optional; example default:
+    # PathJoinSubstitution([FindPackageShare("so101_bringup"), "config", "hardware", "leader_joints.yaml"])
+    default_follower_joint_cfg = ""  # Optional; example default:
+    # PathJoinSubstitution([FindPackageShare("so101_bringup"), "config", "hardware", "follower_joints.yaml"])
     default_leader_ctrl_cfg = PathJoinSubstitution(
         [
             FindPackageShare("so101_bringup"),
@@ -199,9 +199,7 @@ def generate_launch_description():
         [
             EnvironmentVariable(
                 "ROS_HOME",
-                default_value=PathJoinSubstitution(
-                    [EnvironmentVariable("HOME"), ".ros"]
-                ),
+                default_value=PathJoinSubstitution([EnvironmentVariable("HOME"), ".ros"]),
             ),
             "so101_episodes",
         ]
