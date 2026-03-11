@@ -67,9 +67,11 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
 After the [hardware setup guide](docs/hardware.md) and [installation](#installation), these are the fastest ways to get a feel for the repo:
 
 > **Important**
-> Do **not** skip **Calibration → ROS Hardware YAML**. Before running teleop / recording / inference on real hardware, you must copy your LeRobot calibration values into `so101_bringup/config/hardware/leader_joints.yaml` and `so101_bringup/config/hardware/follower_joints.yaml`.
+> Before using the real arms with ROS 2, you must first complete the LeRobot motor setup and calibration steps for both arms. These steps write the required persistent values to the servo motors, including IDs and calibration-related settings stored in EEPROM.
 >
-> **[→ See `docs/hardware.md` → `5. Calibration → ROS Hardware YAML (Required per Robot)`](docs/hardware.md#5-calibration--ros-hardware-yaml-required-per-robot)**
+> Do **not** teleoperate, plan, or command the real arms from ROS until this is done. After calibration, `joint_config_file` is optional and mainly useful for explicit overrides or extra tuning.
+>
+> **[→ See `docs/hardware.md` → `5. Calibration, EEPROM, and Optional Joint Config Overrides`](docs/hardware.md#5-calibration-eeprom-and-optional-joint-config-overrides)**
 
 1. **Teleoperate the robot**
 
@@ -197,32 +199,32 @@ so101-ros-physical-ai/
 > **Warning**
 > Before running on real hardware you **must**:
 >
-> 1. Complete LeRobot motor setup + calibration and update `so101_bringup/config/hardware/*_joints.yaml` with your values.
+> 1. Complete LeRobot motor setup + calibration for both arms so the required persistent values are written to the motors.
 > 2. Set up udev rules so your devices appear as `/dev/so101_leader`, `/dev/so101_follower`, `/dev/cam_wrist`, `/dev/cam_overhead`.
 >
 > **[→ Full hardware setup guide (docs/hardware.md)](docs/hardware.md)**
 
 Follow the [LeRobot SO-101 guide](https://huggingface.co/docs/lerobot/so101) to assemble and configure the arms, then complete these steps before launching ROS:
 
-| Step                          | Action                                                                                               | Notes                                        |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| **1. Motor setup**            | Run the LeRobot "setup motors" routine (writes servo IDs and baudrate to EEPROM)                     | One-time per arm                             |
-| **2. Calibrate**              | Run LeRobot calibration for both arms (`calibrate` command for follower and leader)                  | Required per robot — produces a JSON per arm |
-| **3. Transfer to ROS config** | Copy `id`, `homing_offset`, `range_min`, `range_max` from calibration JSON into the YAML files below | See reference JSONs                          |
-| **4. Udev rules**             | Create stable device symlinks using the [example template](docs/assets/99-so101.rules.example)       | See [docs/hardware.md](docs/hardware.md)     |
-| **5. Launch ROS**             | `ros2 launch so101_bringup teleop.launch.py`                                                         | Only after steps 1-4                         |
+| Step                         | Action                                                                                               | Notes                                                   |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **1. Motor setup**           | Run the LeRobot "setup motors" routine (writes servo IDs and baudrate to EEPROM)                    | One-time per arm                                        |
+| **2. Calibrate**             | Run LeRobot calibration for both arms (`calibrate` command for follower and leader)                  | Required per robot; stores calibration-related values   |
+| **3. Udev rules**            | Create stable device symlinks using the [example template](docs/assets/99-so101.rules.example)      | See [docs/hardware.md](docs/hardware.md)                |
+| **4. Optional ROS overrides**| Provide `joint_config_file` only if you want explicit per-robot overrides or extra tuning            | See precedence notes in [docs/hardware.md](docs/hardware.md) |
+| **5. Launch ROS**            | `ros2 launch so101_bringup teleop.launch.py`                                                         | Only after steps 1-4                                    |
 
 **Config files the driver reads at launch:**
 
 ```
 so101_bringup/config/hardware/
-├── leader_joints.yaml          # ← edit with YOUR calibration values
-├── follower_joints.yaml        # ← edit with YOUR calibration values
+├── leader_joints.yaml          # optional joint override example
+├── follower_joints.yaml        # optional joint override example
 ├── lerobot_leader_arm.json     # reference: LeRobot calibration output example
 └── lerobot_follower_arm.json   # reference: LeRobot calibration output example
 ```
 
-The YAML files use a `joints:` top-level key with per-joint parameters: `id`, `homing_offset`, `range_min`, `range_max`, `return_delay_time`, `acceleration` (follower also supports `p_coefficient`, `i_coefficient`, `d_coefficient`, and torque limits for the gripper). The included `lerobot_*.json` files show the raw LeRobot calibration output for reference.
+The YAML files use a `joints:` top-level key with per-joint parameters such as `id`, `homing_offset`, `range_min`, `range_max`, `return_delay_time`, and `acceleration` (the follower also supports `p_coefficient`, `i_coefficient`, `d_coefficient`, and torque/protection values for the gripper). These files are optional override examples; the included `lerobot_*.json` files show raw LeRobot calibration output for reference.
 
 ---
 
