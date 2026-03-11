@@ -7,10 +7,22 @@
             <!-- follower can be commanded; leader is state-only -->
             <xacro:if value="${variant == 'follower'}">
                 <command_interface name="position"/>
+                <param name="p_coefficient">16</param>
+                <param name="i_coefficient">0</param>
+                <param name="d_coefficient">32</param>
+                <!-- gripper has additional parameters for motor protection -->
+                <xacro:if value="${joint == 'gripper'}">
+                    <param name="max_torque_limit">500</param>
+                    <param name="protection_current">250</param>
+                    <param name="overload_torque">25</param>
+                </xacro:if>
             </xacro:if>
 
             <state_interface name="position"/>
             <state_interface name="velocity"/>
+
+            <param name="return_delay_time">0</param>
+            <param name="acceleration">254</param>
         </joint>
     </xacro:macro>
 
