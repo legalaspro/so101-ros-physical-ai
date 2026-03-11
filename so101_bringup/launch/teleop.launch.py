@@ -1,24 +1,30 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
-from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
-from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution
+from launch.actions import (
+    DeclareLaunchArgument,
+    ExecuteProcess,
+    IncludeLaunchDescription,
+    TimerAction,
+)
 from launch.conditions import IfCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import (
+    EnvironmentVariable,
+    LaunchConfiguration,
+    PathJoinSubstitution,
+    PythonExpression,
+)
 from launch_ros.actions import Node
-from launch.actions import ExecuteProcess
-from launch.substitutions import EnvironmentVariable
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    
+
     # --- Launch arguments ---
-    hardware_type = LaunchConfiguration("hardware_type")  # real|mock|mujoco 
+    hardware_type = LaunchConfiguration("hardware_type")  # real|mock|mujoco
     leader_ns = LaunchConfiguration("leader_namespace")
     follower_ns = LaunchConfiguration("follower_namespace")
     leader_frame_prefix = LaunchConfiguration("leader_frame_prefix")
     follower_frame_prefix = LaunchConfiguration("follower_frame_prefix")
-
 
     leader_usb = LaunchConfiguration("leader_usb_port")
     follower_usb = LaunchConfiguration("follower_usb_port")
@@ -114,12 +120,11 @@ def generate_launch_description():
             PathJoinSubstitution([FindPackageShare("so101_bringup"), "launch", "camera_tf.launch.py"])
         ),
         condition=IfCondition(use_camera_tf),
-        launch_arguments={
-        }.items(),
+        launch_arguments={}.items(),
     )
 
-    # --- Include layout launch tf 
-    layout_tf_launch  = IncludeLaunchDescription(
+    # --- Include layout launch tf
+    layout_tf_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([FindPackageShare("so101_bringup"), "launch", "layout_tf.launch.py"])
         ),
@@ -127,9 +132,7 @@ def generate_launch_description():
 
     # --- Rviz Node
 
-    teleop_rviz = PathJoinSubstitution(
-        [FindPackageShare("so101_bringup"), "rviz", "teleop.rviz"]
-    )
+    teleop_rviz = PathJoinSubstitution([FindPackageShare("so101_bringup"), "rviz", "teleop.rviz"])
 
     rviz_node = Node(
         package="rviz2",
@@ -140,11 +143,14 @@ def generate_launch_description():
         output="screen",
     )
 
-    # --- Launch Rerun 
+    # --- Launch Rerun
 
     rerun_bridge_proc = ExecuteProcess(
         cmd=[
-            "pixi", "run", "bridge", "--",
+            "pixi",
+            "run",
+            "bridge",
+            "--",
             # "--wrist", rerun_wrist,
             # "--overhead", rerun_overhead,
             # "--joint-states", rerun_joint_states,
@@ -163,71 +169,71 @@ def generate_launch_description():
     )
 
     # --- Defaults for files ---
-    default_leader_joint_cfg = PathJoinSubstitution(
-        [FindPackageShare("so101_bringup"), "config", "hardware", "leader_joints.yaml"]
-    )
-    default_follower_joint_cfg = PathJoinSubstitution(
-        [FindPackageShare("so101_bringup"), "config", "hardware", "follower_joints.yaml"]
-    )
+    default_leader_joint_cfg = ""  # Optional; example default:
+    # PathJoinSubstitution([FindPackageShare("so101_bringup"), "config", "hardware", "leader_joints.yaml"])
+    default_follower_joint_cfg = ""  # Optional; example default:
+    # PathJoinSubstitution([FindPackageShare("so101_bringup"), "config", "hardware", "follower_joints.yaml"])
     default_leader_ctrl_cfg = PathJoinSubstitution(
-        [FindPackageShare("so101_bringup"), "config", "ros2_control", "leader_controllers.yaml"]
+        [
+            FindPackageShare("so101_bringup"),
+            "config",
+            "ros2_control",
+            "leader_controllers.yaml",
+        ]
     )
     default_follower_ctrl_cfg = PathJoinSubstitution(
-        [FindPackageShare("so101_bringup"), "config", "ros2_control", "follower_controllers.yaml"]
+        [
+            FindPackageShare("so101_bringup"),
+            "config",
+            "ros2_control",
+            "follower_controllers.yaml",
+        ]
     )
-    default_teleop_params = PathJoinSubstitution(
-        [FindPackageShare("so101_teleop"), "config", "teleop.yaml"]
-    )
+    default_teleop_params = PathJoinSubstitution([FindPackageShare("so101_teleop"), "config", "teleop.yaml"])
     default_cameras_cfg = PathJoinSubstitution(
         [FindPackageShare("so101_bringup"), "config", "cameras", "so101_cameras.yaml"]
     )
 
-    return LaunchDescription([
-        DeclareLaunchArgument("hardware_type", default_value="real"),
-        DeclareLaunchArgument("leader_namespace", default_value="leader"),
-        DeclareLaunchArgument("follower_namespace", default_value="follower"),
-
-        DeclareLaunchArgument("leader_frame_prefix", default_value="leader/"),
-        DeclareLaunchArgument("follower_frame_prefix", default_value="follower/"),
-
-        DeclareLaunchArgument("leader_usb_port", default_value="/dev/so101_leader"),
-        DeclareLaunchArgument("follower_usb_port", default_value="/dev/so101_follower"),
-
-        DeclareLaunchArgument("leader_joint_config_file", default_value=default_leader_joint_cfg),
-        DeclareLaunchArgument("follower_joint_config_file", default_value=default_follower_joint_cfg),
-
-        DeclareLaunchArgument("leader_controller_config_file", default_value=default_leader_ctrl_cfg),
-        DeclareLaunchArgument("follower_controller_config_file", default_value=default_follower_ctrl_cfg),
-
-        DeclareLaunchArgument("leader_rviz", default_value="false"),
-        DeclareLaunchArgument("follower_rviz", default_value="false"),
-
-        DeclareLaunchArgument("arm_controller", default_value="forward_controller"),
-
-        DeclareLaunchArgument("teleop_params_file", default_value=default_teleop_params),
-        DeclareLaunchArgument("teleop_delay_s", default_value="2.0"),
-
-        DeclareLaunchArgument("use_cameras", default_value="true"),
-        DeclareLaunchArgument("cameras_config_file", default_value=default_cameras_cfg),
-        DeclareLaunchArgument("use_camera_tf", default_value="true"),
-
-        DeclareLaunchArgument("use_teleop_rviz", default_value="true"),
-
-        DeclareLaunchArgument("use_rerun", default_value="false"),
-        DeclareLaunchArgument(
-            "rerun_env_dir",
-            # Best: set env var once, no need to pass each run:
-            # export SO101_RERUN_ENV_DIR=/abs/path/to/tools/rerun_env
-            default_value=EnvironmentVariable("SO101_RERUN_ENV_DIR", default_value=""),
-        ),
-        DeclareLaunchArgument("rerun_delay_s", default_value=teleop_delay_s),
-
-        leader_launch,
-        follower_launch,
-        layout_tf_launch,
-        cameras_launch,
-        camera_tf_launch,
-        rviz_node,
-        rerun_start,
-        teleop_start,
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument("hardware_type", default_value="real"),
+            DeclareLaunchArgument("leader_namespace", default_value="leader"),
+            DeclareLaunchArgument("follower_namespace", default_value="follower"),
+            DeclareLaunchArgument("leader_frame_prefix", default_value="leader/"),
+            DeclareLaunchArgument("follower_frame_prefix", default_value="follower/"),
+            DeclareLaunchArgument("leader_usb_port", default_value="/dev/so101_leader"),
+            DeclareLaunchArgument("follower_usb_port", default_value="/dev/so101_follower"),
+            DeclareLaunchArgument("leader_joint_config_file", default_value=default_leader_joint_cfg),
+            DeclareLaunchArgument("follower_joint_config_file", default_value=default_follower_joint_cfg),
+            DeclareLaunchArgument("leader_controller_config_file", default_value=default_leader_ctrl_cfg),
+            DeclareLaunchArgument(
+                "follower_controller_config_file",
+                default_value=default_follower_ctrl_cfg,
+            ),
+            DeclareLaunchArgument("leader_rviz", default_value="false"),
+            DeclareLaunchArgument("follower_rviz", default_value="false"),
+            DeclareLaunchArgument("arm_controller", default_value="forward_controller"),
+            DeclareLaunchArgument("teleop_params_file", default_value=default_teleop_params),
+            DeclareLaunchArgument("teleop_delay_s", default_value="2.0"),
+            DeclareLaunchArgument("use_cameras", default_value="true"),
+            DeclareLaunchArgument("cameras_config_file", default_value=default_cameras_cfg),
+            DeclareLaunchArgument("use_camera_tf", default_value="true"),
+            DeclareLaunchArgument("use_teleop_rviz", default_value="true"),
+            DeclareLaunchArgument("use_rerun", default_value="false"),
+            DeclareLaunchArgument(
+                "rerun_env_dir",
+                # Best: set env var once, no need to pass each run:
+                # export SO101_RERUN_ENV_DIR=/abs/path/to/tools/rerun_env
+                default_value=EnvironmentVariable("SO101_RERUN_ENV_DIR", default_value=""),
+            ),
+            DeclareLaunchArgument("rerun_delay_s", default_value=teleop_delay_s),
+            leader_launch,
+            follower_launch,
+            layout_tf_launch,
+            cameras_launch,
+            camera_tf_launch,
+            rviz_node,
+            rerun_start,
+            teleop_start,
+        ]
+    )

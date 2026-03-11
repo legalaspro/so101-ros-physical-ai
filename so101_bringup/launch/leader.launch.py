@@ -1,10 +1,11 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, Command
+from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import PathJoinSubstitution
+
 
 def generate_launch_description():
 
@@ -19,28 +20,38 @@ def generate_launch_description():
     rviz_config = LaunchConfiguration("rviz_config")
 
     # --- Paths ---
-    xacro_file = PathJoinSubstitution([
-        FindPackageShare("so101_description"),
-        "urdf",
-        "so101_arm.urdf.xacro",
-    ])
+    xacro_file = PathJoinSubstitution(
+        [
+            FindPackageShare("so101_description"),
+            "urdf",
+            "so101_arm.urdf.xacro",
+        ]
+    )
 
-    robot_description = Command([
-        "xacro ", xacro_file,
-        " variant:=leader",
-        " use_ros2_control:=true",
-        " hardware_type:=", hardware_type,
-        " usb_port:=", usb_port,
-        " joint_config_file:=", joint_config_file,
-    ])
+    robot_description = ParameterValue(
+        Command(
+            [
+                "xacro ",
+                xacro_file,
+                " variant:=leader",
+                " use_ros2_control:=true",
+                " hardware_type:=",
+                hardware_type,
+                " usb_port:=",
+                usb_port,
+                " joint_config_file:=",
+                joint_config_file,
+            ]
+        ),
+        value_type=str,
+    )
 
     # --- Nodes ---
     rsp = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         namespace=namespace,
-        parameters=[{"robot_description": robot_description,
-             "frame_prefix": frame_prefix}],
+        parameters=[{"robot_description": robot_description, "frame_prefix": frame_prefix}],
         output="screen",
     )
 
@@ -73,9 +84,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("namespace", default_value="leader"),
-            DeclareLaunchArgument(
-                "hardware_type", default_value="real", description="real | mock"
-            ),
+            DeclareLaunchArgument("hardware_type", default_value="real", description="real | mock"),
             DeclareLaunchArgument("usb_port", default_value="/dev/so101_leader"),
             DeclareLaunchArgument(
                 "frame_prefix",
@@ -84,14 +93,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "joint_config_file",
-                default_value=PathJoinSubstitution(
-                    [
-                        FindPackageShare("so101_bringup"),
-                        "config",
-                        "hardware",
-                        "leader_joints.yaml",
-                    ]
-                ),
+                default_value="",
             ),
             DeclareLaunchArgument(
                 "controller_config_file",

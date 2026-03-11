@@ -40,11 +40,6 @@
                 </xacro:if>
 
                 <xacro:if value="${hardware_type == 'real'}">
-                    <!-- Require a joint_config_file for real hardware -->
-                    <xacro:unless value="${joint_config_file != ''}">
-                        <xacro:error message="so101_ros2_control: joint_config_file is REQUIRED when hardware_type=='real' (pass joint_config_file:=/path/to/*.yaml)"/>
-                    </xacro:unless>
-
                     <plugin>feetech_ros2_driver/FeetechHardwareInterface</plugin>
                     <param name="usb_port">${usb_port}</param>
                     <param name="joint_config_file">${joint_config_file}</param>
