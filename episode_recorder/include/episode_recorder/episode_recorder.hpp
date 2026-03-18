@@ -103,6 +103,13 @@ private:
   bool discard_episode();
   void on_message_received(const std::string &topic, const std::string &type,
                            std::shared_ptr<rclcpp::SerializedMessage> message);
+
+  #ifndef HAS_ROSBAG2_CUSTOM_DATA
+  bool patch_metadata_yaml_after_close(const std::filesystem::path &episode_dir,
+                                      uint32_t episode_index,
+                                      const std::string &task,
+                                      const std::string &experiment_name);
+  #endif
 };
 
 } // namespace episode_recorder

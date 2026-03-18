@@ -15,6 +15,7 @@
 #include "rosbag2_storage/serialized_bag_message.hpp"
 #include "rosbag2_storage/storage_options.hpp"
 #include "rosbag2_storage/topic_metadata.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace episode_recorder {
 
@@ -27,6 +28,7 @@ EpisodeRecorder::EpisodeRecorder(const rclcpp::NodeOptions &options)
   this->declare_parameter<double>("max_episode_duration", 0.0);
   this->declare_parameter<std::string>("experiment_name", "");
   this->declare_parameter<std::string>("task", "");
+  this->declare_parameter<double>("start_gate_max_age_s", 0.5);
 
   RCLCPP_INFO(get_logger(), "EpisodeRecorder node create (unconfigured)");
 }
@@ -46,7 +48,8 @@ EpisodeRecorder::on_configure(const rclcpp_lifecycle::State & /*state*/) {
   max_episode_duration_ = this->get_parameter("max_episode_duration").as_double();
   experiment_name_ = this->get_parameter("experiment_name").as_string();
   task_ = this->get_parameter("task").as_string();
-  
+  start_gate_max_age_s_ = this->get_parameter("start_gate_max_age_s").as_double();
+
   if (task_.empty()) {
     RCLCPP_ERROR(get_logger(), "Parameter 'task' is empty. Provide via launch: task:=<name>");
     return CallbackReturn::FAILURE;
@@ -297,14 +300,16 @@ bool EpisodeRecorder::start_episode() {
     return false;
   }
 
-  // Check if all the required topics are alive 
-  const auto bad = check_topics_alive(start_gate_max_age_s_);
-  if (!bad.empty()) {
-    RCLCPP_ERROR(get_logger(),
-                "Cannot start recording: topics not publishing recently: [%s]. "
-                "Is a camera disconnected?",
-                bad.c_str());
-    return false;
+  // Check if all the required topics are alive (skip if start_gate_max_age_s <= 0)
+  if (start_gate_max_age_s_ > 0.0) {
+    const auto bad = check_topics_alive(start_gate_max_age_s_);
+    if (!bad.empty()) {
+      RCLCPP_ERROR(get_logger(),
+                  "Cannot start recording: topics not publishing recently: [%s]. "
+                  "Is a camera disconnected?",
+                  bad.c_str());
+      return false;
+    }
   }
 
   auto episode_dir = make_episode_dir(next_episode_index_);
@@ -317,17 +322,20 @@ bool EpisodeRecorder::start_episode() {
   storage_options.storage_id = storage_id_;
   storage_options.max_cache_size = 100u * 1024u * 1024u; // 100 MB write cache
 
-  // Store experiment name in rosbag2 native custom_data (written to metadata.yaml)
-  if (!experiment_name_.empty()) {
-    storage_options.custom_data["experiment_name"] = experiment_name_;
-  }
-  storage_options.custom_data["episode_index"] = std::to_string(next_episode_index_);
   task_ = this->get_parameter("task").as_string();
   if (task_.empty()) {
     RCLCPP_ERROR(get_logger(), "Cannot start recording: parameter 'task' is empty");
     return false;
   }
-  storage_options.custom_data["task"] = task_;
+
+  // Store experiment metadata in rosbag2 custom_data (Jazzy+ only)
+  #ifdef HAS_ROSBAG2_CUSTOM_DATA
+    if (!experiment_name_.empty()) {
+      storage_options.custom_data["experiment_name"] = experiment_name_;
+    }
+    storage_options.custom_data["episode_index"] = std::to_string(next_episode_index_);
+    storage_options.custom_data["task"] = task_;
+  #endif
 
   try {
     writer_->open(storage_options,
@@ -382,6 +390,19 @@ bool EpisodeRecorder::stop_episode() {
   // Close the writer — this finalizes the bag and writes metadata.yaml
   // (including custom_data with experiment_name and episode_index)
   writer_.reset();
+
+  #ifndef HAS_ROSBAG2_CUSTOM_DATA
+  if (!patch_metadata_yaml_after_close(current_episode_dir_,
+                                       next_episode_index_,
+                                       task_,
+                                       experiment_name_)) {
+    RCLCPP_ERROR(get_logger(),
+                 "Failed to write episode metadata — bag saved but metadata is incomplete: %s",
+                 current_episode_dir_.string().c_str());
+    current_episode_dir_.clear();
+    return false;
+  }
+  #endif
 
   RCLCPP_INFO(get_logger(), "⏹ Episode %06u saved → %s", next_episode_index_,
               current_episode_dir_.string().c_str());
@@ -595,5 +616,66 @@ std::filesystem::path EpisodeRecorder::make_episode_dir(uint32_t index) const {
   ss << "episode_" << std::setfill('0') << std::setw(6) << index;
   return output_dir_ / ss.str();
 }
+
+#ifndef HAS_ROSBAG2_CUSTOM_DATA
+bool EpisodeRecorder::patch_metadata_yaml_after_close(
+    const std::filesystem::path &episode_dir,
+    uint32_t episode_index,
+    const std::string &task,
+    const std::string &experiment_name) {
+  const auto meta_path = episode_dir / "metadata.yaml";
+
+  if (!std::filesystem::exists(meta_path)) {
+    RCLCPP_WARN(get_logger(), "metadata.yaml not found: %s", meta_path.c_str());
+    return false;
+  }
+
+  try {
+    YAML::Node root = YAML::LoadFile(meta_path.string());
+
+    YAML::Node info = root["rosbag2_bagfile_information"];
+    if (!info || !info.IsMap()) {
+      RCLCPP_WARN(get_logger(),
+                  "metadata.yaml missing 'rosbag2_bagfile_information': %s",
+                  meta_path.c_str());
+      return false;
+    }
+
+    YAML::Node custom = info["custom_data"];
+    if (!custom || !custom.IsMap()) {
+      custom = YAML::Node(YAML::NodeType::Map);
+    }
+
+    custom["episode_index"] = std::to_string(episode_index);
+    custom["task"] = task;
+    if (!experiment_name.empty()) {
+      custom["experiment_name"] = experiment_name;
+    }
+
+    info["custom_data"] = custom;
+    root["rosbag2_bagfile_information"] = info;
+
+    std::ofstream out(meta_path);
+    if (!out.is_open()) {
+      RCLCPP_WARN(get_logger(), "Failed to open metadata.yaml for writing: %s",
+                  meta_path.c_str());
+      return false;
+    }
+
+    out << root;
+    out.close();
+
+    RCLCPP_DEBUG(get_logger(), "Patched rosbag metadata: %s", meta_path.c_str());
+    return true;
+
+  } catch (const std::exception &e) {
+    RCLCPP_WARN(get_logger(), "Failed to patch metadata.yaml at %s: %s",
+                meta_path.c_str(), e.what());
+    return false;
+  }
+}
+#endif  // !HAS_ROSBAG2_CUSTOM_DATA
+
+
 
 } // namespace episode_recorder

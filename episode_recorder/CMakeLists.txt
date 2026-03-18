@@ -17,6 +17,7 @@ find_package(lifecycle_msgs REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 include_directories(include)
 
@@ -32,7 +33,13 @@ ament_target_dependencies(episode_recorder_node
   rosbag2_cpp
   rosbag2_storage
   std_srvs
+  yaml-cpp
 )
+
+# StorageOptions::custom_data was added in Iron (rosbag2_storage 0.22.x)
+if(rosbag2_storage_VERSION VERSION_GREATER_EQUAL "0.22.0")
+  target_compile_definitions(episode_recorder_node PRIVATE HAS_ROSBAG2_CUSTOM_DATA=1)
+endif()
 
 # Teleop Episode Keyboard 
 add_executable(teleop_episode_keyboard

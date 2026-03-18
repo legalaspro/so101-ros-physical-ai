@@ -10,13 +10,19 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- ROS 2 core -->
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>lifecycle_msgs</depend>
-  <depend>rosbag2_cpp</depend>
-  <depend>rosbag2_storage</depend>
   <depend>std_srvs</depend>
 
+  <!-- Bag recording -->
+  <depend>yaml-cpp</depend>
+  <depend>rosbag2_cpp</depend>
+  <depend>rosbag2_storage</depend>
+  <exec_depend>rosbag2_storage_mcap</exec_depend>
+
+  <!-- Testing -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
