@@ -18,6 +18,10 @@ episode_recorder:
     # Maximum episode duration in seconds (0 = unlimited).
     max_episode_duration: 0.0
 
+    # Maximum age (seconds) of last message on each topic before
+    # start_recording is allowed. Set to 0 to disable the check.
+    start_gate_max_age_s: 0.5
+
     # Experiment name — used as subdirectory under root_dir and stored
     # in rosbag2 metadata.yaml custom_data. Empty = no subdirectory.
     experiment_name: "pick_and_place"
