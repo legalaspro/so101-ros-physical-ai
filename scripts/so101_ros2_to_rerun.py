@@ -76,9 +76,7 @@ class So101Ros2ToRerun(Node):
         self._time_lock = threading.Lock()
         self._last_ros_time: np.datetime64 | None = None
         self._last_action_time = np.datetime64(0, "ns")
-        self._clear_state_gap = np.timedelta64(
-            max(0, int(clear_state_gap_s * 1e9)), "ns"
-        )
+        self._clear_state_gap = np.timedelta64(max(0, int(clear_state_gap_s * 1e9)), "ns")
 
         # Separate callback groups so heavy-ish callbacks don't block each other.
         self._cg_img_wrist = ReentrantCallbackGroup()
@@ -255,9 +253,7 @@ def main() -> None:
     p.add_argument("--wrist", default="/follower/image_raw/compressed")
     p.add_argument("--overhead", default="/static_camera/image_raw/compressed")
     p.add_argument("--joint-states", default="/follower/joint_states")
-    p.add_argument(
-        "--forward-commands", default="/follower/forward_controller/commands"
-    )
+    p.add_argument("--forward-commands", default="/follower/forward_controller/commands")
     p.add_argument(
         "--cmd-joints",
         nargs="*",
@@ -282,24 +278,30 @@ def main() -> None:
         default=2.0,
         help="Clear state/position when commands resume after this many seconds; <=0 disables.",
     )
+    p.add_argument(
+        "--viewer",
+        choices=["native", "web"],
+        default="web",
+        help="Launch web viewer (default) or native desktop app.",
+    )
 
     args, unknownargs = p.parse_known_args()
 
-    # Initialise Rerun recording (no sinks yet — just buffering).
+    # Initialise Rerun recording.
     rr.init("so101_ros2_live")
 
-    # Start a gRPC server and use it as log sink.
-    server_uri = rr.serve_grpc()
-    rr.serve_web_viewer(connect_to=server_uri)
+    if args.viewer == "native":
+        rr.spawn()
+    else:
+        server_uri = rr.serve_grpc()
+        rr.serve_web_viewer(connect_to=server_uri)
 
     # ──  # Blueprint: cameras left, plots right (state + action)
     blueprint = rrb.Blueprint(
         rrb.Horizontal(
             rrb.Vertical(
                 rrb.Spatial2DView(name="Wrist Camera", origin="cameras/cam_wrist"),
-                rrb.Spatial2DView(
-                    name="Overhead Camera", origin="cameras/cam_overhead"
-                ),
+                rrb.Spatial2DView(name="Overhead Camera", origin="cameras/cam_overhead"),
                 row_shares=[1, 1],
             ),
             rrb.Vertical(
