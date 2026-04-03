@@ -278,12 +278,23 @@ def main() -> None:
         default=2.0,
         help="Clear state/position when commands resume after this many seconds; <=0 disables.",
     )
+    p.add_argument(
+        "--viewer",
+        choices=["native", "web"],
+        default="web",
+        help="Launch web viewer (default) or native desktop app.",
+    )
+
     args, unknownargs = p.parse_known_args()
 
-    # Initialise Rerun recording (always web viewer).
+    # Initialise Rerun recording.
     rr.init("so101_ros2_live")
-    server_uri = rr.serve_grpc()
-    rr.serve_web_viewer(connect_to=server_uri)
+
+    if args.viewer == "native":
+        rr.spawn()
+    else:
+        server_uri = rr.serve_grpc()
+        rr.serve_web_viewer(connect_to=server_uri)
 
     # ──  # Blueprint: cameras left, plots right (state + action)
     blueprint = rrb.Blueprint(
