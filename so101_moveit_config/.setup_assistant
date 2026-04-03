@@ -1,7 +1,7 @@
 moveit_setup_assistant_config:
   urdf:
-    package: ""
-    relative_path: /home/dmitri/so101_follower.urdf
+    package: so101_description
+    relative_path: urdf/so101_arm.urdf.xacro
   srdf:
     relative_path: config/so101_arm.srdf
   package_settings:

@@ -14,3 +14,9 @@ endif()
 
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
 install(FILES .setup_assistant DESTINATION share/${PROJECT_NAME})
+
+# Install Python scripts as executables
+install(PROGRAMS
+  scripts/so101_moveit_test.py
+  DESTINATION lib/${PROJECT_NAME}
+)

@@ -1,0 +1,18 @@
+# Pilz Industrial Motion Planner pipeline configuration
+# Provides PTP (point-to-point), LIN (linear), and CIRC (circular) planners
+
+planning_plugins:
+  - pilz_industrial_motion_planner/CommandPlanner
+
+# Request adapters (minimal – Pilz does its own validation)
+request_adapters:
+  - default_planning_request_adapters/ResolveConstraintFrames
+  - default_planning_request_adapters/ValidateWorkspaceBounds
+  - default_planning_request_adapters/CheckStartStateBounds
+  - default_planning_request_adapters/CheckStartStateCollision
+
+# Response adapters
+response_adapters:
+  - default_planning_response_adapters/ValidateSolution
+  - default_planning_response_adapters/DisplayMotionPath
+

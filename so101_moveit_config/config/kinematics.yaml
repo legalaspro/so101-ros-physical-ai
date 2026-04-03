@@ -1,4 +1,8 @@
 manipulator:
-  kinematics_solver: kdl_kinematics_plugin/KDLKinematicsPlugin
-  kinematics_solver_search_resolution: 0.005
-  kinematics_solver_timeout: 0.005
+  kinematics_solver: pick_ik/PickIkPlugin
+  kinematics_solver_timeout: 0.2
+  kinematics_solver_attempts: 10
+  position_scale: 1.0
+  rotation_scale: 0.5
+  approximate: true           # return best-effort solution, don't fail
+  mode: global                # global search (like DLS with random restarts)

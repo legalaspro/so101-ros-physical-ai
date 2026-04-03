@@ -9,7 +9,7 @@
   </description>
   <maintainer email="dmitri.manajev@protonmail.com">Dmitri Manajev</maintainer>
 
-  <license>BSD-3-Clause</license>
+  <license>Apache-2.0</license>
 
   <url type="website">http://moveit.ros.org/</url>
   <url type="bugtracker">https://github.com/moveit/moveit2/issues</url>
@@ -21,6 +21,7 @@
 
   <exec_depend>moveit_ros_move_group</exec_depend>
   <exec_depend>moveit_kinematics</exec_depend>
+  <exec_depend>pick_ik</exec_depend>
   <exec_depend>moveit_planners</exec_depend>
   <exec_depend>moveit_simple_controller_manager</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
@@ -32,8 +33,10 @@
   <!-- <exec_depend>joint_trajectory_controller</exec_depend> -->
   <!-- <exec_depend>gazebo_ros_control</exec_depend> -->
   <exec_depend>moveit_configs_utils</exec_depend>
+  <exec_depend>moveit_py</exec_depend>
   <exec_depend>moveit_ros_move_group</exec_depend>
   <exec_depend>moveit_ros_visualization</exec_depend>
+  <exec_depend>tf_transformations</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>rviz_common</exec_depend>
