@@ -13,8 +13,8 @@ def generate_launch_description():
                 executable="static_transform_publisher",
                 name="tf_overhead_cam",
                 arguments=[
-                    "-0.15", "0.0", "0.80",   # x y z (meters)
-                    "0.0", "1.0", "0.0",   # yaw pitch roll (radians)
+                    "0.2", "0.0", "0.60",   # x y z (meters)
+                    "0.0", "1.57", "0.0",   # yaw pitch roll (radians)
                     root,
                     "static_camera/cam_overhead",
                 ],
@@ -27,8 +27,8 @@ def generate_launch_description():
                 name="tf_wrist_cam",
                 arguments=[
                     "0.00", "0.0", "-0.02",
-                    "-1.57", "0.0", "-1.57", 
-                    "follower/moving_jaw_so101_v1_link", 
+                    "-1.57", "0.0", "-1.57",
+                    "follower/moving_jaw_so101_v1_link",
                     "follower/cam_wrist",
                 ],
             ),

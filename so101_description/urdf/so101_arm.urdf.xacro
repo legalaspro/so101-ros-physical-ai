@@ -9,9 +9,19 @@
   <xacro:arg name="usb_port" default="/dev/ttyUSB0"/>
   <xacro:arg name="joint_config_file" default=""/>
 
+  <!-- Camera args -->
+  <xacro:arg name="enable_static_cam" default="false"/>
+  <xacro:arg name="enable_wrist_cam" default="false"/>
+  <xacro:arg name="cam_static_xyz" default="0.2 0.0 0.60"/>
+  <xacro:arg name="cam_static_rpy" default="0.0 1.5708 0.0"/>
+  <xacro:arg name="cam_wrist_xyz" default="0.0 0.0 -0.02"/>
+  <xacro:arg name="cam_wrist_rpy" default="-1.5708 0.0 -1.5708"/>
+
   <!-- Convert args to properties for use in ${} expressions -->
   <xacro:property name="use_ros2_control" value="$(arg use_ros2_control)"/>
   <xacro:property name="variant" value="$(arg variant)"/>
+  <xacro:property name="enable_static_cam" value="$(arg enable_static_cam)"/>
+  <xacro:property name="enable_wrist_cam" value="$(arg enable_wrist_cam)"/>
 
   <xacro:include filename="$(find so101_description)/urdf/so101_macros.xacro"/>
   <xacro:include filename="$(find so101_description)/urdf/so101_materials.xacro"/>
@@ -22,6 +32,7 @@
   <xacro:include filename="$(find so101_description)/urdf/end_effectors/so101_ee_follower.xacro"/>
 
   <xacro:include filename="$(find so101_description)/urdf/ros2_control/so101_ros2_control.xacro"/>
+  <xacro:include filename="$(find so101_description)/urdf/so101_cameras.xacro"/>
 
 
   <xacro:so101_materials/>
@@ -49,6 +60,19 @@
       usb_port="$(arg usb_port)"
       joint_config_file="$(arg joint_config_file)"
       system_name="SO101_${variant}_SYSTEM"/>
+  </xacro:if>
+
+  <!-- Cameras (opt-in via enable_static_cam / enable_wrist_cam) -->
+  <xacro:if value="${enable_static_cam}">
+    <xacro:so101_static_camera
+      xyz="$(arg cam_static_xyz)"
+      rpy="$(arg cam_static_rpy)"/>
+  </xacro:if>
+
+  <xacro:if value="${enable_wrist_cam}">
+    <xacro:so101_wrist_camera
+      xyz="$(arg cam_wrist_xyz)"
+      rpy="$(arg cam_wrist_rpy)"/>
   </xacro:if>
 
 </robot>
