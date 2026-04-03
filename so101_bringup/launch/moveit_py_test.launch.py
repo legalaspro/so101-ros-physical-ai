@@ -2,7 +2,7 @@
 Launch: hardware bringup + MoveItPy motion test.
 
 For visualisation, run the Rerun bridge separately:
-  pixi run bridge        # or bridge-dual
+  pixi run bridge        # or bridge-3d
 
 Usage:
   ros2 launch so101_bringup moveit_py_test.launch.py
@@ -93,8 +93,8 @@ def generate_launch_description():
     #    that doesn't inherit launch-level remappings.
     moveit_py_node = Node(
         name="moveit_py",
-        package="so101_bringup",
-        executable="so101_moveit_rerun_test.py",
+        package="so101_moveit_config",
+        executable="so101_moveit_test.py",
         output="screen",
         parameters=[moveit_config.to_dict(), {"use_sim_time": use_sim_time}],
     )

@@ -6,7 +6,7 @@ Uses the moveit_py API (PlanningComponent / MoveItPy) — the official
 Python equivalent of the C++ MoveGroupInterface.
 
 For visualisation, run the Rerun bridge separately:
-  pixi run bridge        # or bridge-dual
+  pixi run bridge-3d
 
 Prerequisites:
   ros2 launch so101_bringup moveit_py_test.launch.py
@@ -142,16 +142,14 @@ def main() -> None:
         ("LEFT",     [136.4,  100.0,  62.0], [0.0, 3.141, 0.0]),
         ("RIGHT",    [136.4, -100.0,  62.0], [0.0, 3.141, 0.0]),
         ("LINE_START", [250.0, 0.0, 50.0], [0.0,  3.141, 0.0]),
-        ("LINE_MID",   [250.0,  0.0, 10.0], [0.0, 3.141, 0.0]),
-        ("LINE_END",   [250.0,  0.0, 50.0], [0.0, 3.141, 0.0]),
     ]
 
     # ── Phase 3: Cartesian linear path — Pilz LIN (like computeCartesianPath) ──
     # Each segment is a straight-line Cartesian move between waypoints.
     # The TCP traces a linear path in XYZ space with trapezoidal velocity.
     cartesian_waypoints = [
-    #     ("LINE_MID",   [250.0,  0.0, 10.0], [0.0, 3.141, 0.0]),
-    #     ("LINE_END",   [250.0,  0.0, 50.0], [0.0, 3.141, 0.0]),
+        ("LINE_MID",   [250.0,  0.0, 10.0], [0.0, 3.141, 0.0]),
+        ("LINE_END",   [250.0,  0.0, 50.0], [0.0, 3.141, 0.0]),
     ]
 
     # ── SIGINT handler: race to send "rest" before hardware dies ──

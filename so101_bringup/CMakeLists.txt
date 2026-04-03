@@ -14,11 +14,7 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-# Install Python scripts as executables (used by moveit_py_test.launch.py)
-install(PROGRAMS
-  ../scripts/so101_moveit_rerun_test.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+
 
 
 if(BUILD_TESTING)
