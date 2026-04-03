@@ -1,0 +1,9 @@
+# Cartesian limits for Pilz Industrial Motion Planner (LIN / CIRC)
+# These limits define the maximum Cartesian speed and acceleration
+# for linear and circular motions.
+cartesian_limits:
+  max_trans_vel: 0.5        # m/s  – translational velocity
+  max_trans_acc: 1.0        # m/s² – translational acceleration
+  max_trans_dec: -1.0       # m/s² – translational deceleration
+  max_rot_vel: 1.57         # rad/s – rotational velocity (~90°/s)
+

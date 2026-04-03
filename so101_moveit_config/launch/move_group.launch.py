@@ -29,7 +29,10 @@ def generate_launch_description():
         )
         .robot_description_semantic() # uses your SRDF in so101_moveit_config
         .robot_description_kinematics()
-        .planning_pipelines(pipelines=["ompl"]) # loads ompl_planning.yaml
+        .planning_pipelines(pipelines=["ompl", "pilz_industrial_motion_planner"])
+        .pilz_cartesian_limits(
+            file_path="config/pilz_cartesian_limits.yaml"
+        )
         .joint_limits()
         .trajectory_execution(
             file_path="config/moveit_controllers.yaml",

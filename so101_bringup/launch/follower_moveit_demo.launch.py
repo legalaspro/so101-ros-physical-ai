@@ -3,6 +3,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 
@@ -11,6 +12,7 @@ def generate_launch_description():
     hardware_type = LaunchConfiguration("hardware_type")
     namespace = LaunchConfiguration("namespace")
     joint_config_file = LaunchConfiguration("joint_config_file")
+    use_rviz = LaunchConfiguration("use_rviz")
 
     use_sim_time = PythonExpression(["'", hardware_type, "' == 'mujoco'"])
 
@@ -48,7 +50,7 @@ def generate_launch_description():
         }.items(),
     )
 
-    # 3) MoveIt RViz
+    # 3) MoveIt RViz (optional)
     moveit_rviz = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -61,6 +63,7 @@ def generate_launch_description():
             "namespace": namespace,
             "variant": "follower",
         }.items(),
+        condition=IfCondition(use_rviz),
     )
 
     return LaunchDescription(
@@ -68,6 +71,8 @@ def generate_launch_description():
             DeclareLaunchArgument("hardware_type", default_value="real"),  # real|mock|mujoco
             DeclareLaunchArgument("namespace", default_value="follower"),
             DeclareLaunchArgument("joint_config_file", default_value=""),
+            DeclareLaunchArgument("use_rviz", default_value="true",
+                                 description="Launch MoveIt RViz (set false when using Rerun)"),
             follower_bringup,
             move_group,
             moveit_rviz,

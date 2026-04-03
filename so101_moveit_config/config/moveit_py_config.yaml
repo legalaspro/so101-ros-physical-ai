@@ -1,0 +1,42 @@
+# MoveItPy configuration for SO-101
+# Loaded by moveit_py_test.launch.py → passed as node parameters to MoveItPy
+
+planning_scene_monitor_options:
+  name: "planning_scene_monitor"
+  robot_description: "robot_description"
+  joint_state_topic: "/follower/joint_states"
+  attached_collision_object_topic: "/moveit_cpp/planning_scene_monitor"
+  publish_planning_scene_topic: "/moveit_cpp/publish_planning_scene"
+  monitored_planning_scene_topic: "/moveit_cpp/monitored_planning_scene"
+  wait_for_initial_state_timeout: 0.0
+
+planning_pipelines:
+  pipeline_names: ["ompl", "pilz_industrial_motion_planner"]
+
+# Default plan request params (used when arm.plan() is called with no args)
+plan_request_params:
+  planning_attempts: 1
+  planning_pipeline: ompl
+  planner_id: "RRTConnect"
+  max_velocity_scaling_factor: 1.0
+  max_acceleration_scaling_factor: 1.0
+  planning_time: 1.0
+
+# ── Named parameter sets (select per-move in Python) ─────────────
+ompl_rrtc:
+  plan_request_params:
+    planning_attempts: 1
+    planning_pipeline: ompl
+    planner_id: "RRTConnect"
+    max_velocity_scaling_factor: 1.0
+    max_acceleration_scaling_factor: 1.0
+    planning_time: 1.0
+
+pilz_lin:
+  plan_request_params:
+    planning_attempts: 1
+    planning_pipeline: pilz_industrial_motion_planner
+    planner_id: "LIN"
+    max_velocity_scaling_factor: 1.0
+    max_acceleration_scaling_factor: 1.0
+    planning_time: 1.0
