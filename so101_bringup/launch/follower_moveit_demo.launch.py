@@ -2,19 +2,19 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration
 
 
-def generate_launch_description():
-    hardware_type = LaunchConfiguration("hardware_type")
-    namespace = LaunchConfiguration("namespace")
-    joint_config_file = LaunchConfiguration("joint_config_file")
-    use_rviz = LaunchConfiguration("use_rviz")
+def _launch_setup(context):
+    hardware_type = LaunchConfiguration("hardware_type").perform(context)
+    namespace = LaunchConfiguration("namespace").perform(context)
+    joint_config_file = LaunchConfiguration("joint_config_file").perform(context)
+    use_rviz = LaunchConfiguration("use_rviz").perform(context)
 
-    use_sim_time = PythonExpression(["'", hardware_type, "' == 'mujoco'"])
+    use_sim_time = "true" if hardware_type == "mujoco" else "false"
 
     # 1) Bringup (ros2_control + rsp + spawners) - your existing follower.launch.py
     follower_bringup = IncludeLaunchDescription(
@@ -30,7 +30,6 @@ def generate_launch_description():
             "hardware_type": hardware_type,
             "joint_config_file": joint_config_file,
             "use_rviz": "false",  # MoveIt RViz is launched separately below
-            "use_sim_time": use_sim_time,
         }.items(),
     )
 
@@ -66,15 +65,22 @@ def generate_launch_description():
         condition=IfCondition(use_rviz),
     )
 
+    return [follower_bringup, move_group, moveit_rviz]
+
+
+def generate_launch_description():
     return LaunchDescription(
         [
-            DeclareLaunchArgument("hardware_type", default_value="real"),  # real|mock|mujoco
+            DeclareLaunchArgument(
+                "hardware_type", default_value="real"
+            ),  # real|mock|mujoco
             DeclareLaunchArgument("namespace", default_value="follower"),
             DeclareLaunchArgument("joint_config_file", default_value=""),
-            DeclareLaunchArgument("use_rviz", default_value="true",
-                                 description="Launch MoveIt RViz (set false when using Rerun)"),
-            follower_bringup,
-            move_group,
-            moveit_rviz,
+            DeclareLaunchArgument(
+                "use_rviz",
+                default_value="true",
+                description="Launch MoveIt RViz (set false when using Rerun)",
+            ),
+            OpaqueFunction(function=_launch_setup),
         ]
     )
