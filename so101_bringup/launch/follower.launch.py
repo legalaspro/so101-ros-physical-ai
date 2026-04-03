@@ -21,6 +21,14 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration("use_rviz")
     rviz_config = LaunchConfiguration("rviz_config")
 
+    # --- Camera TF arguments ---
+    enable_static_cam = LaunchConfiguration("enable_static_cam")
+    enable_wrist_cam = LaunchConfiguration("enable_wrist_cam")
+    cam_static_xyz = LaunchConfiguration("cam_static_xyz")
+    cam_static_rpy = LaunchConfiguration("cam_static_rpy")
+    cam_wrist_xyz = LaunchConfiguration("cam_wrist_xyz")
+    cam_wrist_rpy = LaunchConfiguration("cam_wrist_rpy")
+
     # --- Paths ---
     xacro_file = PathJoinSubstitution([FindPackageShare("so101_description"), "urdf", "so101_arm.urdf.xacro"])
 
@@ -37,6 +45,19 @@ def generate_launch_description():
                 usb_port,
                 " joint_config_file:=",
                 joint_config_file,
+                " enable_static_cam:=",
+                enable_static_cam,
+                " enable_wrist_cam:=",
+                enable_wrist_cam,
+                " cam_static_xyz:='",
+                cam_static_xyz,
+                "' cam_static_rpy:='",
+                cam_static_rpy,
+                "' cam_wrist_xyz:='",
+                cam_wrist_xyz,
+                "' cam_wrist_rpy:='",
+                cam_wrist_rpy,
+                "'",
             ]
         ),
         value_type=str,
@@ -113,6 +134,37 @@ def generate_launch_description():
                 "arm_controller",
                 default_value="forward_controller",
                 description="Arm controller to use: trajectory_controller or forward_controller",
+            ),
+            # --- Camera TF arguments ---
+            DeclareLaunchArgument(
+                "enable_static_cam",
+                default_value="false",
+                description="Enable static (overhead) camera frame in URDF",
+            ),
+            DeclareLaunchArgument(
+                "enable_wrist_cam",
+                default_value="false",
+                description="Enable wrist camera frame in URDF",
+            ),
+            DeclareLaunchArgument(
+                "cam_static_xyz",
+                default_value="0.2 0.0 0.60",
+                description="Static camera position relative to base_link (x y z meters)",
+            ),
+            DeclareLaunchArgument(
+                "cam_static_rpy",
+                default_value="0.0 1.5708 0.0",
+                description="Static camera orientation relative to base_link (roll pitch yaw radians)",
+            ),
+            DeclareLaunchArgument(
+                "cam_wrist_xyz",
+                default_value="0.0 0.0 -0.02",
+                description="Wrist camera position relative to end-effector link (x y z meters)",
+            ),
+            DeclareLaunchArgument(
+                "cam_wrist_rpy",
+                default_value="-1.5708 0.0 -1.5708",
+                description="Wrist camera orientation relative to end-effector link (roll pitch yaw radians)",
             ),
             DeclareLaunchArgument("use_rviz", default_value="true"),
             DeclareLaunchArgument(

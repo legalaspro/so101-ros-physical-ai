@@ -247,7 +247,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/78/2d/7fa73dfa841b5ac06c7b8855cfc18622132e365f5b81d02230333ff26e9e/cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/6b/e7/237155ae19a9023de7e30ec64e5d99a9431a567407ac21170a046d22a5a3/cryptography-46.0.5-cp311-abi3-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/02/10/5da547df7a391dcde17f59520a231527b8571e6f46fc8efb02ccb370ab12/docutils-0.22.4-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/94/44/45a040e6c224b1d42d694d9d9ebf067fbfb41a7b3801bd05b8647b97e004/gradio_rerun-0.29.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/be/6d/8db85a26fcdc9658198744485623ee1be87de555155112421c487119709d/gradio_rerun-0.30.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/42/77/de194443bf38daed9452139e960c632b0ef9f9a5dd9ce605fdf18ca9f1b1/id-1.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7f/66/b15ce62552d84bbfcec9a4873ab79d993a1dd4edb922cbfccae192bd5b5f/jaraco.classes-3.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/8d/48/aa685dbf1024c7bd82bede569e3a85f82c32fd3d79ba5fea578f0159571a/jaraco_context-6.1.0-py3-none-any.whl
@@ -261,7 +261,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/67/921ec3024056483db83953ae8e48079ad62b92db7880013ca77632921dd0/readme_renderer-44.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/63/43/2590293ce7985cbb88f9fdd67b90c36b954116f6c75639b378f098b3ff61/rerun_sdk-0.29.2-cp310-abi3-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/c5/89/182ef62bff3d9f190dd2e024b28cf0513ac7a83bc15b979e052c46c41f64/rerun_sdk-0.30.2-cp310-abi3-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ff/9a/9afaade874b2fa6c752c36f1548f718b5b83af81ed9b76628329dab81c1b/rfc3986-2.0.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b7/46/f5af3402b579fd5e11573ce652019a67074317e18c1935cc0b4ba9b35552/secretstorage-3.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/7a/882d99539b19b1490cac5d77c67338d126e4122c8276bf640e411650c830/twine-6.2.0-py3-none-any.whl
@@ -492,7 +492,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/d5/72/12b5f8d3865bf0f87cf1404d8c374e7487dcf097a1c91c436e72e6badd83/cffi-2.0.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/37/53/a18500f270342d66bf7e4d9f091114e31e5ee9e7375a5aba2e85a91e0044/cryptography-46.0.5-cp311-abi3-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/02/10/5da547df7a391dcde17f59520a231527b8571e6f46fc8efb02ccb370ab12/docutils-0.22.4-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/94/44/45a040e6c224b1d42d694d9d9ebf067fbfb41a7b3801bd05b8647b97e004/gradio_rerun-0.29.2-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/be/6d/8db85a26fcdc9658198744485623ee1be87de555155112421c487119709d/gradio_rerun-0.30.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/42/77/de194443bf38daed9452139e960c632b0ef9f9a5dd9ce605fdf18ca9f1b1/id-1.6.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/7f/66/b15ce62552d84bbfcec9a4873ab79d993a1dd4edb922cbfccae192bd5b5f/jaraco.classes-3.4.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f4/49/c152890d49102b280ecf86ba5f80a8c111c3a155dafa3bd24aeb64fde9e1/jaraco_context-6.1.1-py3-none-any.whl
@@ -506,7 +506,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/67/921ec3024056483db83953ae8e48079ad62b92db7880013ca77632921dd0/readme_renderer-44.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/dc/81/9b3619b37c8a7492ccbe9ea172dedc5ffb66b83ded82b8f443c1958fe1c0/rerun_sdk-0.29.2-cp310-abi3-manylinux_2_28_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/88/1b/ffa0335499343894648fa92cd655978a65de0f2c6fc2ddca9fe6b6f9c242/rerun_sdk-0.30.2-cp310-abi3-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/ff/9a/9afaade874b2fa6c752c36f1548f718b5b83af81ed9b76628329dab81c1b/rfc3986-2.0.0-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b7/46/f5af3402b579fd5e11573ce652019a67074317e18c1935cc0b4ba9b35552/secretstorage-3.5.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/3a/7a/882d99539b19b1490cac5d77c67338d126e4122c8276bf640e411650c830/twine-6.2.0-py3-none-any.whl
@@ -3102,14 +3102,14 @@ packages:
   - pkg:pypi/gradio-client?source=hash-mapping
   size: 64328
   timestamp: 1772124435145
-- pypi: https://files.pythonhosted.org/packages/94/44/45a040e6c224b1d42d694d9d9ebf067fbfb41a7b3801bd05b8647b97e004/gradio_rerun-0.29.2-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/be/6d/8db85a26fcdc9658198744485623ee1be87de555155112421c487119709d/gradio_rerun-0.30.2-py3-none-any.whl
   name: gradio-rerun
-  version: 0.29.2
-  sha256: 534ed61346742912d4eb11c0a69abde8e9808af3dcc81af510d9de41ecbc60ad
+  version: 0.30.2
+  sha256: 57892ffc2889c495769abde3f818f2fdc43cd4a4e18175bc147ad77afe95d99e
   requires_dist:
   - gradio>=6.0.0
   - opencv-python
-  - rerun-sdk==0.29.2
+  - rerun-sdk==0.30.2
   - twine>=6.1.0
   - build ; extra == 'dev'
   - opencv-python>=4.10.0 ; extra == 'dev'
@@ -8029,10 +8029,10 @@ packages:
   - rerun-sdk[notebook] ; extra == 'all'
   - rerun-sdk[datafusion] ; extra == 'all'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/63/43/2590293ce7985cbb88f9fdd67b90c36b954116f6c75639b378f098b3ff61/rerun_sdk-0.29.2-cp310-abi3-manylinux_2_28_x86_64.whl
+- pypi: https://files.pythonhosted.org/packages/88/1b/ffa0335499343894648fa92cd655978a65de0f2c6fc2ddca9fe6b6f9c242/rerun_sdk-0.30.2-cp310-abi3-manylinux_2_28_aarch64.whl
   name: rerun-sdk
-  version: 0.29.2
-  sha256: 392a7f2c3db660716b660f4b164f9b73a076100378781a3a2551edf290d00c23
+  version: 0.30.2
+  sha256: f9bbe66ba4e9532c1a062d2d488ba09009c2231441fcfb013454832a9bd1bdfb
   requires_dist:
   - attrs>=23.1.0
   - numpy>=2
@@ -8041,6 +8041,7 @@ packages:
   - typing-extensions>=4.5
   - inline-snapshot==0.31.1 ; extra == 'tests'
   - opencv-python>4.6 ; extra == 'tests'
+  - pandas>=2 ; extra == 'tests'
   - polars==1.36.1 ; extra == 'tests'
   - pytest==8.4.2 ; extra == 'tests'
   - semver>=3.0,<3.1 ; extra == 'tests'
@@ -8048,15 +8049,19 @@ packages:
   - tomli==2.0.1 ; extra == 'tests'
   - torch>=2.5 ; extra == 'tests'
   - datafusion==50.1.0 ; extra == 'tests'
-  - rerun-notebook==0.29.2 ; extra == 'notebook'
+  - rerun-notebook==0.30.2 ; extra == 'notebook'
   - datafusion==50.1.0 ; extra == 'datafusion'
-  - rerun-notebook==0.28.0a1+dev ; extra == 'all'
+  - pandas>=2 ; extra == 'datafusion'
+  - datafusion==50.1.0 ; extra == 'dataplatform'
+  - pandas>=2 ; extra == 'dataplatform'
   - datafusion==50.1.0 ; extra == 'all'
+  - pandas>=2 ; extra == 'all'
+  - rerun-notebook==0.30.2 ; extra == 'all'
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/dc/81/9b3619b37c8a7492ccbe9ea172dedc5ffb66b83ded82b8f443c1958fe1c0/rerun_sdk-0.29.2-cp310-abi3-manylinux_2_28_aarch64.whl
+- pypi: https://files.pythonhosted.org/packages/c5/89/182ef62bff3d9f190dd2e024b28cf0513ac7a83bc15b979e052c46c41f64/rerun_sdk-0.30.2-cp310-abi3-manylinux_2_28_x86_64.whl
   name: rerun-sdk
-  version: 0.29.2
-  sha256: a97f5601cb50c14ec665525c0cf65056167de1306958a0526ff1e8d384320076
+  version: 0.30.2
+  sha256: f3480847f124894d1c9bcbbdb4182a4c64986bf9d0d669e10752f0738ecac359
   requires_dist:
   - attrs>=23.1.0
   - numpy>=2
@@ -8065,6 +8070,7 @@ packages:
   - typing-extensions>=4.5
   - inline-snapshot==0.31.1 ; extra == 'tests'
   - opencv-python>4.6 ; extra == 'tests'
+  - pandas>=2 ; extra == 'tests'
   - polars==1.36.1 ; extra == 'tests'
   - pytest==8.4.2 ; extra == 'tests'
   - semver>=3.0,<3.1 ; extra == 'tests'
@@ -8072,10 +8078,14 @@ packages:
   - tomli==2.0.1 ; extra == 'tests'
   - torch>=2.5 ; extra == 'tests'
   - datafusion==50.1.0 ; extra == 'tests'
-  - rerun-notebook==0.29.2 ; extra == 'notebook'
+  - rerun-notebook==0.30.2 ; extra == 'notebook'
   - datafusion==50.1.0 ; extra == 'datafusion'
-  - rerun-notebook==0.28.0a1+dev ; extra == 'all'
+  - pandas>=2 ; extra == 'datafusion'
+  - datafusion==50.1.0 ; extra == 'dataplatform'
+  - pandas>=2 ; extra == 'dataplatform'
   - datafusion==50.1.0 ; extra == 'all'
+  - pandas>=2 ; extra == 'all'
+  - rerun-notebook==0.30.2 ; extra == 'all'
   requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/ff/9a/9afaade874b2fa6c752c36f1548f718b5b83af81ed9b76628329dab81c1b/rfc3986-2.0.0-py2.py3-none-any.whl
   name: rfc3986

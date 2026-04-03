@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!--
+    Camera frames for SO-101 arm.
+    Defines static (overhead) and wrist camera links/joints.
+    Position and orientation are configurable via macro params,
+    passed from launch args so each user can match their physical
+    camera mounting.
+
+    Usage at launch time:
+      xacro ... enable_static_cam:=true cam_static_xyz:="0.2 0.0 0.60"
+
+    For simulation (Gazebo/MuJoCo), pass include_inertia:=true to avoid
+    warnings about links with no inertia.
+  -->
+
+  <xacro:macro name="so101_static_camera"
+               params="xyz:='0.2 0.0 0.60'
+                       rpy:='0.0 1.5708 0.0'
+                       parent:='base_link'
+                       include_inertia:='false'">
+
+    <link name="static_camera_link">
+      <xacro:if value="${include_inertia}">
+        <inertial>
+          <mass value="0.001"/>
+          <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7"/>
+        </inertial>
+      </xacro:if>
+    </link>
+
+    <joint name="static_camera_joint" type="fixed">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent}"/>
+      <child link="static_camera_link"/>
+    </joint>
+
+  </xacro:macro>
+
+  <xacro:macro name="so101_wrist_camera"
+               params="xyz:='0.0 0.0 -0.02'
+                       rpy:='-1.5708 0.0 -1.5708'
+                       parent:='moving_jaw_so101_v1_link'
+                       include_inertia:='false'">
+
+    <link name="wrist_camera_link">
+      <xacro:if value="${include_inertia}">
+        <inertial>
+          <mass value="0.001"/>
+          <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7"/>
+        </inertial>
+      </xacro:if>
+    </link>
+
+    <joint name="wrist_camera_joint" type="fixed">
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <parent link="${parent}"/>
+      <child link="wrist_camera_link"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>
