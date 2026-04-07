@@ -55,7 +55,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
     </td>
     <td width="33%" align="center">
       <strong><a href="so101_kinematics/README.md">Kinematics</a></strong><br>
-      Interactive IK control with a 3D Viser gizmo — drag the end-effector and the arm follows in real time using <a href="https://github.com/dimitriBarber/robokin">robokin</a> + Placo.
+      Interactive IK control with a 3D Viser gizmo — drag the end-effector and the arm follows in real time using <a href="https://github.com/legalaspro/robokin">robokin</a> + Placo.
     </td>
   </tr>
 </table>
@@ -135,7 +135,7 @@ After the [hardware setup guide](docs/hardware.md) and [installation](#installat
 | `rosbag_to_lerobot`   | Python          | Convert rosbag episodes to [LeRobot](https://github.com/huggingface/lerobot) v3.0 datasets (local or Hub) — runs in Pixi `lerobot` env |
 | `so101_inference`     | Python          | Policy inference — sync (ACT, SmolVLA on-device) and async (any LeRobot policy via remote GPU server). See [so101_inference README](so101_inference/README.md) |
 | `policy_server`       | Python          | GPU-side inference server — loads any LeRobot policy and serves actions over ZMQ or gRPC. Runs on a remote machine (e.g. vast.ai). See [policy_server README](policy_server/README.md) |
-| `so101_kinematics`    | Python          | IK control nodes for the SO-101 arm using [robokin](https://github.com/dimitriBarber/robokin) (Placo) + [Viser](https://viser.studio/) 3D UI — interactive gizmo servo and planned trajectories. See [so101_kinematics README](so101_kinematics/README.md) |
+| `so101_kinematics`    | Python          | IK control nodes for the SO-101 arm using [robokin](https://github.com/legalaspro/robokin) (Placo) + [Viser](https://viser.studio/) 3D UI — interactive gizmo servo and planned trajectories. See [so101_kinematics README](so101_kinematics/README.md) |
 | `feetech_ros2_driver` | C++             | **Submodule** — Feetech STS3215 ros2_control hardware interface                                  |
 | `scripts/`            | Python          | `so101_ros2_to_rerun.py` — ROS 2 to Rerun bridge (runs inside Pixi env)                          |
 
