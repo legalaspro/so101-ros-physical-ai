@@ -7,7 +7,7 @@ ROS2 package for inverse-kinematics control of the SO-101 arm using
 ## Prerequisites
 
 - ROS2 (Humble or later)
-- The [so101-ros-physical-ai](https://github.com/dimitriBarber/so101-ros-physical-ai) stack built and sourced
+- The [so101-ros-physical-ai](https://github.com/legalaspro/so101-ros-physical-ai) stack built and sourced
 
 ## Installation
 
@@ -15,8 +15,8 @@ ROS2 package for inverse-kinematics control of the SO-101 arm using
 # 1. Install pip
 sudo apt install -y python3-pip
 
-# 2. Install robokin with placo and viser extras
-pip install /home/so101/ros2_ws/src/robokin[placo,viser] --break-system-packages
+# 2. Install robokin with placo and viser extras from GitHub
+pip install "robokin[placo,viser] @ git+https://github.com/legalaspro/robokin.git" --break-system-packages
 
 # 3. Remove the pip-installed numpy 2.x — ROS2 ships numpy 1.x and
 #    other packages (placo, viser, etc.) work fine with it.
