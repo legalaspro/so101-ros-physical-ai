@@ -17,7 +17,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
   </a>
 </p>
 
-**Main demo:** run async policy inference on the real SO-101 arm with a ROS 2 client on the robot and the policy hosted on a remote GPU server via `policy_server`, including ACT and VLA-style LeRobot models trained on datasets collected with this repo's end-to-end pipeline.
+**Main demo:** run async policy inference on the real SO-101 arm with a ROS 2 client on the robot and the policy hosted on a remote GPU server via `policy_server`, including ACT and VLA-style LeRobot models trained on datasets collected with this repo's end-to-end pipeline. See [so101_inference](so101_inference/README.md) and [policy_server](policy_server/README.md) for details.
 
 ## What you can do with this repo
 
@@ -25,7 +25,7 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
   <tr>
     <td width="33%" align="center"><strong>Teleoperate the robot</strong></td>
     <td width="33%" align="center"><strong>Record imitation learning episodes</strong></td>
-    <td width="33%" align="center"><strong>Run local or remote inference</strong></td>
+    <td width="33%" align="center"><strong>IK kinematics control</strong></td>
   </tr>
   <tr>
     <td width="33%" align="center">
@@ -39,8 +39,8 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
       </a>
     </td>
     <td width="33%" align="center">
-      <a href="so101_inference/README.md">
-        <img src="https://img.youtube.com/vi/l6kWDoHxczc/hqdefault.jpg" alt="SO-101 async inference demo" />
+      <a href="so101_kinematics/README.md">
+        <video src="https://github.com/user-attachments/assets/ca9ddc47-adbd-4dd0-8c6e-e57ba177ee6b" controls width="100%"></video>
       </a>
     </td>
   </tr>
@@ -54,8 +54,8 @@ Complete ROS 2 stack for the SO-101 robot arm in a leader/follower configuration
       Save synchronized robot + camera episodes with keyboard controls and optional live Rerun.
     </td>
     <td width="33%" align="center">
-      <strong><a href="so101_inference/README.md">Inference</a></strong><br>
-      Run ACT and SmolVLA on-device, or offload any LeRobot policy to a remote GPU via <a href="policy_server/README.md"><code>policy_server</code></a>.
+      <strong><a href="so101_kinematics/README.md">Kinematics</a></strong><br>
+      Interactive IK control with a 3D Viser gizmo — drag the end-effector and the arm follows in real time using <a href="https://github.com/dimitriBarber/robokin">robokin</a> + Placo.
     </td>
   </tr>
 </table>
@@ -135,6 +135,7 @@ After the [hardware setup guide](docs/hardware.md) and [installation](#installat
 | `rosbag_to_lerobot`   | Python          | Convert rosbag episodes to [LeRobot](https://github.com/huggingface/lerobot) v3.0 datasets (local or Hub) — runs in Pixi `lerobot` env |
 | `so101_inference`     | Python          | Policy inference — sync (ACT, SmolVLA on-device) and async (any LeRobot policy via remote GPU server). See [so101_inference README](so101_inference/README.md) |
 | `policy_server`       | Python          | GPU-side inference server — loads any LeRobot policy and serves actions over ZMQ or gRPC. Runs on a remote machine (e.g. vast.ai). See [policy_server README](policy_server/README.md) |
+| `so101_kinematics`    | Python          | IK control nodes for the SO-101 arm using [robokin](https://github.com/dimitriBarber/robokin) (Placo) + [Viser](https://viser.studio/) 3D UI — interactive gizmo servo and planned trajectories. See [so101_kinematics README](so101_kinematics/README.md) |
 | `feetech_ros2_driver` | C++             | **Submodule** — Feetech STS3215 ros2_control hardware interface                                  |
 | `scripts/`            | Python          | `so101_ros2_to_rerun.py` — ROS 2 to Rerun bridge (runs inside Pixi env)                          |
 
@@ -173,6 +174,8 @@ so101-ros-physical-ai/
 │   └── test/
 ├── so101_inference/
 │   └── so101_inference/     # LeRobot policy inference node + utils (runs in Pixi lerobot env)
+├── so101_kinematics/
+│   └── so101_kinematics/    # IK control nodes (Placo + Viser), motion planner, trajectory executor
 ├── feetech_ros2_driver/     # (submodule) Feetech ros2_control plugin
 ├── scripts/
 │   └── so101_ros2_to_rerun.py

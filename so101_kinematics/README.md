@@ -1,7 +1,7 @@
 # so101_kinematics
 
 ROS2 package for inverse-kinematics control of the SO-101 arm using
-[robokin](https://github.com/dimitriBarber/robokin) (Placo backend) with a
+[robokin](https://github.com/legalaspro/robokin) (Placo backend) with a
 [Viser](https://viser.studio/) 3D browser UI.
 
 ## Prerequisites
