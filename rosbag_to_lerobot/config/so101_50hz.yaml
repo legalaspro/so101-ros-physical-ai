@@ -20,15 +20,15 @@ joint_names: &j
 features:
   # --- Reference wrist camera ---
   - key: "observation.images.wrist"
-    topic: "/follower/image_raw"
-    msg_type: "sensor_msgs/msg/Image"
+    topic: "/follower/image_raw/compressed"
+    msg_type: "sensor_msgs/msg/CompressedImage"
     stamp_src: "bag"
     shape: [480, 640, 3]
 
   # --- Static camera ---
   - key: "observation.images.top"
-    topic: "/static_camera/image_raw"
-    msg_type: "sensor_msgs/msg/Image"
+    topic: "/static_camera/image_raw/compressed"
+    msg_type: "sensor_msgs/msg/CompressedImage"
     stamp_src: "bag"
     shape: [480, 640, 3]
 

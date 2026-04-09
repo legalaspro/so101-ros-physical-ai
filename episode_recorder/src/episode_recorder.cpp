@@ -29,6 +29,8 @@ EpisodeRecorder::EpisodeRecorder(const rclcpp::NodeOptions &options)
   this->declare_parameter<std::string>("experiment_name", "");
   this->declare_parameter<std::string>("task", "");
   this->declare_parameter<double>("start_gate_max_age_s", 0.5);
+  this->declare_parameter<std::string>("storage_preset_profile", "");
+  this->declare_parameter<std::string>("storage_config_uri", "");
 
   RCLCPP_INFO(get_logger(), "EpisodeRecorder node create (unconfigured)");
 }
@@ -49,6 +51,16 @@ EpisodeRecorder::on_configure(const rclcpp_lifecycle::State & /*state*/) {
   experiment_name_ = this->get_parameter("experiment_name").as_string();
   task_ = this->get_parameter("task").as_string();
   start_gate_max_age_s_ = this->get_parameter("start_gate_max_age_s").as_double();
+  storage_preset_profile_ = this->get_parameter("storage_preset_profile").as_string();
+  storage_config_uri_ = this->get_parameter("storage_config_uri").as_string();
+
+  if (!storage_preset_profile_.empty() && !storage_config_uri_.empty()) {
+    RCLCPP_WARN(
+      get_logger(),
+      "Both storage_preset_profile and storage_config_uri are set. "
+      "Prefer setting only one."
+    );
+  }
 
   if (task_.empty()) {
     RCLCPP_ERROR(get_logger(), "Parameter 'task' is empty. Provide via launch: task:=<name>");
@@ -321,6 +333,9 @@ bool EpisodeRecorder::start_episode() {
   storage_options.uri = episode_dir.string();
   storage_options.storage_id = storage_id_;
   storage_options.max_cache_size = 100u * 1024u * 1024u; // 100 MB write cache
+
+  storage_options.storage_preset_profile = storage_preset_profile_;
+  storage_options.storage_config_uri = storage_config_uri_;
 
   task_ = this->get_parameter("task").as_string();
   if (task_.empty()) {

@@ -46,6 +46,8 @@ private:
   double max_episode_duration_{0.0};
   std::string experiment_name_;
   std::string task_;
+  std::string storage_preset_profile_;
+  std::string storage_config_uri_;
 
   // Effective output path: root_dir_ / experiment_name_ (if set)
   std::filesystem::path output_dir_;

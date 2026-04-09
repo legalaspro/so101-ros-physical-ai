@@ -3,8 +3,8 @@ episode_recorder:
     # Topics to record — add your sensor and action topics here.
     # The recorder uses GenericSubscription, so any message type works.
     topics:
-      - /follower/image_raw
-      - /static_camera/image_raw
+      - /follower/image_raw/compressed
+      - /static_camera/image_raw/compressed
       - /follower/joint_states
       - /follower/forward_controller/commands
 
@@ -25,3 +25,14 @@ episode_recorder:
     # Experiment name — used as subdirectory under root_dir and stored
     # in rosbag2 metadata.yaml custom_data. Empty = no subdirectory.
     experiment_name: "pick_and_place"
+
+    # Optional MCAP preset profile.
+    # Examples: "zstd_fast", "zstd_small"
+    # Leave empty to use backend defaults.
+    # storage_preset_profile: "zstd_fast"
+    
+    # Optional path to an MCAP storage config YAML file.
+    # Use this for advanced writer settings such as compression type,
+    # compression level, chunk size, and indexing options.
+    # Leave empty to disable custom storage config.
+    # storage_config_uri: ""

@@ -5,7 +5,7 @@
     storage_id: mcap
     max_episode_duration: 0.0
     topics:
-      - /follower/image_raw
-      - /static_camera/image_raw
+      - /follower/image_raw/compressed
+      - /static_camera/image_raw/compressed
       - /follower/joint_states
       - /follower/forward_controller/commands
