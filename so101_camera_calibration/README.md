@@ -42,6 +42,9 @@ You also need a printed ChArUco board — see
 
 Calibrates focal lengths, principal point, and distortion.
 
+<video src="https://github.com/user-attachments/assets/d333c7da-e61c-4738-8384-039c7fbca979" controls width="720"></video>
+
+
 ```bash
 ros2 run so101_camera_calibration camera_intrinsic_calibration_node \
   --ros-args -p image_topic:=/static_camera/image_raw
@@ -66,7 +69,9 @@ Estimates the transform `base_link → static_camera_optical_frame`.
 ros2 launch so101_camera_calibration handeye_calibration.launch.py
 ```
 
-### Manual Calibration (Recommended)I tho
+### Manual Calibration (Recommended)
+
+<video src="https://github.com/user-attachments/assets/cf9792f5-6f94-478e-8a59-db8f60bd06aa" controls width="720"></video>
 
 1. Toggle **Manual EE: ON** to enable the IK gizmo
 2. Drag the gripper to a pose where the ChArUco board is clearly visible
