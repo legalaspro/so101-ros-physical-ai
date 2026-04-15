@@ -1,0 +1,17 @@
+# Plan a joint-quintic trajectory from the current configuration to the
+# requested joint target and execute it.
+
+# Names of the joints being commanded. Order does not have to match the
+# planner's internal joint order — the node reorders before planning.
+# Any controllable joints omitted here keep their currently measured value.
+string[] joint_names
+
+# Target positions (radians), one per entry in joint_names. Lengths must match.
+float64[] positions
+
+# Optional override (sec). 0 -> planner default (auto from joint speed).
+float64 duration
+
+---
+bool success
+string message

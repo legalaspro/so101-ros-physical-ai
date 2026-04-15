@@ -44,6 +44,7 @@ setup(
             'robokin_test_node = so101_kinematics.robokin_test_node:main',
             'so101_ik_control_node = so101_kinematics.so101_ik_control_node:main',
             'so101_planned_control_node = so101_kinematics.so101_planned_control_node:main',
+            'cartesian_motion_node = so101_kinematics.cartesian_motion_node:main',
         ],
     },
 )
