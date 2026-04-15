@@ -30,6 +30,10 @@ def _spawn_cameras(context):
             else os.path.join(pkg_share, "config", "cameras", param_path)
         )
 
+        overrides = {"use_sim_time": False}
+        if "camera_info_url" in cam:
+            overrides["camera_info_url"] = cam["camera_info_url"]
+
         if cam_type == "v4l2_camera":
             nodes.append(
                 Node(
@@ -37,7 +41,7 @@ def _spawn_cameras(context):
                     executable="v4l2_camera_node",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file, {"use_sim_time": False}],
+                    parameters=[param_file, overrides],
                     output="screen",
                 )
             )
@@ -48,7 +52,7 @@ def _spawn_cameras(context):
                     executable="camera_node",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file, {"use_sim_time": False}],
+                    parameters=[param_file, overrides],
                     output="screen",
                     remappings=[
                         ("~/image_raw", "image_raw"),
@@ -64,7 +68,7 @@ def _spawn_cameras(context):
                     executable="gscam_node",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file, {"use_sim_time": False}],
+                    parameters=[param_file, overrides],
                     output="screen",
                     remappings=[
                         ("camera/image_raw", "image_raw"),
@@ -80,7 +84,7 @@ def _spawn_cameras(context):
                     executable="usb_cam_node_exe",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file, {"use_sim_time": False}],
+                    parameters=[param_file, overrides],
                     output="screen",
                 )
             )
@@ -91,7 +95,7 @@ def _spawn_cameras(context):
                     executable="realsense2_camera_node",
                     name=name,
                     namespace=ns,
-                    parameters=[param_file, {"use_sim_time": False}],
+                    parameters=[param_file, overrides],
                     output="screen",
                 )
             )

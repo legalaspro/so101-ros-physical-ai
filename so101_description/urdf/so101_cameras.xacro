@@ -36,6 +36,14 @@
       <child link="static_camera_link"/>
     </joint>
 
+    <!-- Optical frame: rotated so Z=forward, X=right, Y=down (OpenCV/REP-103) -->
+    <link name="static_camera_optical_frame"/>
+    <joint name="static_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+      <parent link="static_camera_link"/>
+      <child link="static_camera_optical_frame"/>
+    </joint>
+
   </xacro:macro>
 
   <xacro:macro name="so101_wrist_camera"
@@ -57,6 +65,14 @@
       <origin xyz="${xyz}" rpy="${rpy}"/>
       <parent link="${parent}"/>
       <child link="wrist_camera_link"/>
+    </joint>
+
+    <!-- Optical frame: rotated so Z=forward, X=right, Y=down (OpenCV/REP-103) -->
+    <link name="wrist_camera_optical_frame"/>
+    <joint name="wrist_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+      <parent link="wrist_camera_link"/>
+      <child link="wrist_camera_optical_frame"/>
     </joint>
 
   </xacro:macro>

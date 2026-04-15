@@ -9,3 +9,9 @@ cameras:
     camera_type: gscam
     param_path: so101_gs_cam.yaml
     namespace: static_camera
+    # Empty by default — each user calibrates their own camera. An example
+    # calibration lives at config/cameras/calibrations/cam_overhead.yaml.
+    # Override with your own by passing a local cameras config, e.g.:
+    #   cameras_config_file:=$(ros2 pkg prefix so101_pick_place)/share/so101_pick_place/config/cameras/local_cameras.yaml
+    # camera_info_url: "package://so101_bringup/config/cameras/calibrations/cam_overhead.yaml"
+    camera_info_url: ""
