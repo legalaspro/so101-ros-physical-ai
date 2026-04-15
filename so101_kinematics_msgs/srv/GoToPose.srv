@@ -1,0 +1,14 @@
+# Plan a smooth joint-quintic trajectory to `target` and execute it.
+# `target.header.frame_id` must match the planner's base frame
+# (default: follower/base_link). Empty -> assumed to already be in base.
+geometry_msgs/PoseStamped target
+
+# Optional: "joint_quintic" (default) or "cartesian". Empty -> default.
+string strategy
+
+# Optional override (sec). 0 -> planner default (auto from joint speed).
+float64 duration
+
+---
+bool success
+string message

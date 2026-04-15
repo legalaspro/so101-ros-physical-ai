@@ -13,26 +13,31 @@
 # limitations under the License.
 
 from setuptools import find_packages, setup
+import os
+from glob import glob
 
-package_name = 'so101_kinematics'
+package_name = 'so101_camera_calibration'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name, 'launch'), glob('launch/*.py')),
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
     ],
     install_requires=[
         'setuptools',
-        'robokin[placo,viser]',
+        'opencv-python',
+        'numpy',
     ],
     zip_safe=True,
-    maintainer='Dmitri Manajev',
+    maintainer='so101',
     maintainer_email='dmitri@manajev.com',
-    description='ROS2 IK control for the SO-101 arm using robokin + Placo + Viser',
+    description='Camera intrinsic + hand-eye calibration for the SO-101 arm.',
     license='Apache-2.0',
     extras_require={
         'test': [
@@ -41,10 +46,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'robokin_test_node = so101_kinematics.robokin_test_node:main',
-            'so101_ik_control_node = so101_kinematics.so101_ik_control_node:main',
-            'so101_planned_control_node = so101_kinematics.so101_planned_control_node:main',
-            'cartesian_motion_node = so101_kinematics.cartesian_motion_node:main',
+            'camera_intrinsic_calibration_node = so101_camera_calibration.camera_intrinsic_calibration_node:main',
+            'handeye_calibration_node = so101_camera_calibration.handeye_calibration_node:main',
         ],
     },
 )

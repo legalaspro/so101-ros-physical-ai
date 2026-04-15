@@ -1,0 +1,336 @@
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.015339807878856412
+  - 0.06135923151542565
+  - 1.5631264228554684
+  - -1.748738098189631
+  - 0.0030679615757712823
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.015339807878856412
+  - -0.6596117387908257
+  - 0.9526020692769832
+  - -0.3374757733348411
+  - 0.0015339807878856412
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.035281558121369745
+  - -1.1566215140657734
+  - -0.24697090684958822
+  - 1.0983302441261191
+  - -0.5230874486690036
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.09050486648525283
+  - -1.1566215140657734
+  - -0.29299033048615747
+  - 1.2072428800659996
+  - 0.6366020269725411
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.18714565612204823
+  - -1.5416506918250694
+  - 1.5401167110371838
+  - 0.200951483213019
+  - 1.5033011721279284
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.09203884727313846
+  - -1.5416506918250694
+  - 1.560058461279697
+  - 0.03681553890925539
+  - 0.44945637085049284
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.12425244381873693
+  - -1.5416506918250694
+  - 1.538582730249298
+  - 0.2270291566070749
+  - -0.4203107358806657
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.2561747915769021
+  - -1.538582730249298
+  - 1.5661943844312396
+  - 0.06289321230331128
+  - -1.3529710549151355
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.10891263593988053
+  - -0.18714565612204823
+  - 1.569262346007011
+  - -1.714990520856147
+  - -0.5859806609723149
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.009203884727313847
+  - 0.4924078329112908
+  - 0.9940195505498954
+  - -1.573864288370668
+  - -0.35895150436524004
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.009203884727313847
+  - 0.05368932757599744
+  - 0.8774370106705868
+  - -0.9556700308527545
+  - -0.3911651009108385
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.0674951546669682
+  - 0.2346990605465031
+  - 0.7531845668518499
+  - -0.9940195505498954
+  - 0.015339807878856412
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.09817477042468103
+  - 0.25310683000113077
+  - 0.7378447589729934
+  - -0.9372622613981267
+  - 0.25924275315267337
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.11504855909142309
+  - 0.4065049087896949
+  - 0.7700583555185919
+  - -1.0661166475805206
+  - 0.6734175658817965
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.047553404424454875
+  - -0.684155431396996
+  - 1.0492428589137786
+  - -0.7148350471547088
+  - 0.5062136600022615
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.2270291566070749
+  - -0.8022719520641903
+  - 1.1504855909142309
+  - -0.619728238305799
+  - 0.023009711818284616
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.0674951546669682
+  - -0.2791845033951867
+  - 1.0707185899441776
+  - -0.8268156446703606
+  - -0.4663301595172349
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.05368932757599744
+  - -1.5324468070977555
+  - 1.05231082048955
+  - -0.056757289151768725
+  - -0.4295146206079795
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.12578642460662257
+  - -1.3667768820061064
+  - 1.1535535524900022
+  - -0.5522330836388308
+  - 0.10584467436410924
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.38196121618352463
+  - -1.5324468070977555
+  - 0.966407896367954
+  - -0.04295146206079795
+  - 0.483203948183977
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - -0.3466796580621549
+  - -0.09357282806102411
+  - 0.7332428166093364
+  - -1.445009902188274
+  - -0.23623304133438874
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.02914563496982718
+  - 1.526310883946213
+  - -1.2870098810360528
+  - -0.4095728703654662
+  - 0.11351457830353745
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.023009711818284616
+  - 0.6427379501240836
+  - 0.010737865515199488
+  - -1.043106935762236
+  - 0.12118448224296566
+- joint_names:
+  - gripper
+  - wrist_roll
+  - wrist_flex
+  - elbow_flex
+  - shoulder_lift
+  - shoulder_pan
+  joint_values:
+  - 1.8684
+  - 0.023009711818284616
+  - 0.14726215563702155
+  - 1.3084856120664519
+  - -1.6428934238255217
+  - 0.11965050145508001
