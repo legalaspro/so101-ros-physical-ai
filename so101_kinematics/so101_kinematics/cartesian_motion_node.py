@@ -26,8 +26,8 @@ Three ways to drive the arm:
 Trajectory mode wins absolutely over servo mode.
 
 Services:
-    /go_to_pose    (so101_camera_calibration/srv/GoToPose)
-    /go_to_joints  (so101_camera_calibration/srv/GoToJoints)
+    /go_to_pose    (so101_kinematics_msgs/srv/GoToPose)
+    /go_to_joints  (so101_kinematics_msgs/srv/GoToJoints)
 
 Subscribes:
     /follower/joint_states  (sensor_msgs/JointState)
