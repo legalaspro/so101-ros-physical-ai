@@ -10,10 +10,11 @@ python = "3.12.*"
 pyyaml = ">=6.0.3,<7"
 numpy = ">=2.4.2,<3"
 gradio = ">=6.5.1,<7"
+pytz = ">=2026.1.post1,<2027"
 
 [feature.bridge.pypi-dependencies]
-gradio-rerun = ">=0.29.1, <0.31"
-rerun-sdk = ">=0.30.0, <0.31"
+rerun-sdk = ">=0.31.3, <0.32"
+gradio-rerun = ">=0.31.3, <0.32"
 
 
 [feature.bridge.tasks]
