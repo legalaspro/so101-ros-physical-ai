@@ -284,6 +284,11 @@ def main() -> None:
         default="web",
         help="Launch web viewer (default) or native desktop app.",
     )
+    p.add_argument(
+        "--rerun-memory-limit",
+        default="512MiB",
+        help="Rerun gRPC server memory limit, e.g. 128MiB, 256MiB, 1GiB.",
+    )
 
     args, unknownargs = p.parse_known_args()
 
@@ -293,7 +298,7 @@ def main() -> None:
     if args.viewer == "native":
         rr.spawn()
     else:
-        server_uri = rr.serve_grpc()
+        server_uri = rr.serve_grpc(server_memory_limit=args.rerun_memory_limit)
         rr.serve_web_viewer(connect_to=server_uri)
 
     # ──  # Blueprint: cameras left, plots right (state + action)
