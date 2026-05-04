@@ -5,8 +5,9 @@ SO-101 MoveIt Cartesian motion test (moveit_py API).
 Uses the moveit_py API (PlanningComponent / MoveItPy) — the official
 Python equivalent of the C++ MoveGroupInterface.
 
-For visualisation, run the Rerun bridge separately:
-  pixi run bridge-3d
+For visualisation, run the Rerun bridge separately. MoveIt/follower_split uses
+unprefixed TF frames, so use the MoveIt-specific bridge task:
+  pixi run bridge-3d-moveit
 
 Prerequisites:
   ros2 launch so101_bringup moveit_py_test.launch.py

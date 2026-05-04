@@ -25,6 +25,7 @@ gradio-rerun = ">=0.31.3, <0.32"
 # - forwards all extra args to the Python script
 bridge = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_ros2_to_rerun.py \"$@\"' -- " }
 bridge-3d = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_ros2_rerun_3d_bridge.py \"$@\"' -- " }
+bridge-3d-moveit = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_ros2_rerun_3d_bridge.py --tf-prefix \"\" --wrist-tf-frame wrist_camera_link --overhead-tf-frame static_camera_link \"$@\"' -- " }
 replay = { cmd = "bash -c 'source /opt/ros/jazzy/setup.bash && source ${ROS_WS:-$HOME/ros2_ws}/install/setup.bash 2>/dev/null || true && exec python scripts/so101_episode_viewer_ros2.py \"$@\"' -- " }
 
 

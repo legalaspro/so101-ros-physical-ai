@@ -12,6 +12,8 @@ def _launch_setup(context):
     hardware_type = LaunchConfiguration("hardware_type").perform(context)
     namespace = LaunchConfiguration("namespace").perform(context)
     joint_config_file = LaunchConfiguration("joint_config_file").perform(context)
+    use_cameras = LaunchConfiguration("use_cameras").perform(context)
+    cameras_config_file = LaunchConfiguration("cameras_config_file").perform(context)
     use_rviz = LaunchConfiguration("use_rviz").perform(context)
 
     use_sim_time = "true" if hardware_type == "mujoco" else "false"
@@ -31,6 +33,18 @@ def _launch_setup(context):
             "joint_config_file": joint_config_file,
             "use_rviz": "false",  # MoveIt RViz is launched separately below
         }.items(),
+    )
+
+    cameras_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("so101_bringup"),
+                "launch",
+                "cameras.launch.py",
+            )
+        ),
+        condition=IfCondition(use_cameras),
+        launch_arguments={"cameras_config": cameras_config_file}.items(),
     )
 
     # 2) Move group (pure MoveIt)
@@ -65,7 +79,7 @@ def _launch_setup(context):
         condition=IfCondition(use_rviz),
     )
 
-    return [follower_bringup, move_group, moveit_rviz]
+    return [follower_bringup, cameras_launch, move_group, moveit_rviz]
 
 
 def generate_launch_description():
@@ -76,6 +90,16 @@ def generate_launch_description():
             ),  # real|mock|mujoco
             DeclareLaunchArgument("namespace", default_value="follower"),
             DeclareLaunchArgument("joint_config_file", default_value=""),
+            DeclareLaunchArgument("use_cameras", default_value="false"),
+            DeclareLaunchArgument(
+                "cameras_config_file",
+                default_value=os.path.join(
+                    get_package_share_directory("so101_bringup"),
+                    "config",
+                    "cameras",
+                    "so101_cameras.yaml",
+                ),
+            ),
             DeclareLaunchArgument(
                 "use_rviz",
                 default_value="true",

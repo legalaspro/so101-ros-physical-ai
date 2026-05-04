@@ -213,14 +213,16 @@ class So101Ros2ToRerun3DBridge(Node):
                 link_names.add(parent.get("link"))
             if child is not None and child.get("link"):
                 link_names.add(child.get("link"))
-        ee_frame = self._tf_prefix + "gripper_frame_link"
+        prefix = self._tf_prefix
+        ee_frame = prefix + "gripper_frame_link"
         for link_name in sorted(link_names):
             rr.log(f"axes/{link_name}",
-                   rr.Transform3D(parent_frame=link_name),
+                   rr.CoordinateFrame(frame=link_name),
                    rr.TransformAxes3D(0.06), static=True)
             is_ee = link_name == ee_frame
-            short_name = link_name.removeprefix(self._tf_prefix)
+            short_name = link_name.removeprefix(prefix)
             rr.log(f"axes/{link_name}/label",
+                   rr.CoordinateFrame(frame=link_name),
                    rr.Points3D([[0, 0, 0]],
                                 radii=0.01 if is_ee else 0.004,
                                 labels=[short_name],
@@ -325,7 +327,7 @@ def main() -> None:
         "wrist_flex", "wrist_roll", "gripper",
     ], help="Joint name order matching controller 'joints' param")
     p.add_argument("--tf-prefix", default="follower/",
-                   help="Namespace prefix on TF frame names (e.g. 'follower/')")
+                   help="TF frame prefix used by robot_state_publisher. Use '' for MoveIt/follower_split.")
     p.add_argument("--tf-root-frame", default="world",
                    help="Root frame of the TF tree")
     p.add_argument("--clear-state-gap-s", type=float, default=2.0)

@@ -1,8 +1,9 @@
 """
 Launch: hardware bringup + MoveItPy motion test.
 
-For visualisation, run the Rerun bridge separately:
-  pixi run bridge        # or bridge-3d
+For visualisation, run the Rerun bridge separately. MoveIt/follower_split uses
+unprefixed TF frames, so use:
+  pixi run bridge-3d-moveit
 
 Usage:
   ros2 launch so101_bringup moveit_py_test.launch.py
@@ -14,6 +15,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
@@ -24,6 +26,8 @@ def generate_launch_description():
     hardware_type = LaunchConfiguration("hardware_type")
     namespace = LaunchConfiguration("namespace")
     joint_config_file = LaunchConfiguration("joint_config_file")
+    use_cameras = LaunchConfiguration("use_cameras")
+    cameras_config_file = LaunchConfiguration("cameras_config_file")
 
     use_sim_time = PythonExpression(["'", hardware_type, "' == 'mujoco'"])
 
@@ -73,9 +77,23 @@ def generate_launch_description():
             "namespace": namespace,
             "hardware_type": hardware_type,
             "joint_config_file": joint_config_file,
+            "enable_static_cam": "true",
+            "enable_wrist_cam": "true",
             "use_rviz": "false",
             "use_sim_time": use_sim_time,
         }.items(),
+    )
+
+    cameras_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("so101_bringup"),
+                "launch",
+                "cameras.launch.py",
+            )
+        ),
+        condition=IfCondition(use_cameras),
+        launch_arguments={"cameras_config": cameras_config_file}.items(),
     )
 
     # 2) Static TF: world → base_link (required by MoveIt's virtual joint)
@@ -104,7 +122,18 @@ def generate_launch_description():
             DeclareLaunchArgument("hardware_type", default_value="real"),
             DeclareLaunchArgument("namespace", default_value="follower"),
             DeclareLaunchArgument("joint_config_file", default_value=""),
+            DeclareLaunchArgument("use_cameras", default_value="false"),
+            DeclareLaunchArgument(
+                "cameras_config_file",
+                default_value=os.path.join(
+                    get_package_share_directory("so101_bringup"),
+                    "config",
+                    "cameras",
+                    "so101_cameras.yaml",
+                ),
+            ),
             follower_bringup,
+            cameras_launch,
             static_tf,
             moveit_py_node,
         ]
