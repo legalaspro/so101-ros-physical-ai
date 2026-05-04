@@ -104,11 +104,13 @@ class PlannedControlNode(Node):
         self.declare_parameter("use_cameras", False)
         self.declare_parameter("cam_wrist_topic", "/follower/image_raw")
         self.declare_parameter("cam_overhead_topic", "/static_camera/image_raw")
+        self.declare_parameter("manual_servo_gizmo", True)
         joints_topic = self.get_parameter("joints_topic").value
         cmd_topic = self.get_parameter("cmd_topic").value
         self.use_cameras = self.get_parameter("use_cameras").value
         cam_wrist_topic = self.get_parameter("cam_wrist_topic").value
         cam_overhead_topic = self.get_parameter("cam_overhead_topic").value
+        self.manual_servo_gizmo = self.get_parameter("manual_servo_gizmo").value
 
         # -- Load robot model --
         model = load_robot_description("so_arm101_description")
@@ -422,7 +424,7 @@ class PlannedControlNode(Node):
         self.q_commanded = q_cmd.copy()
 
         self.solver.set_joint_state(q_cmd)
-        self.ui.sync_from_solver(self.solver, move_gizmo=True)
+        self.ui.sync_from_solver(self.solver, move_gizmo=self.manual_servo_gizmo)
         self._last_gizmo_T = self.solver.current_pose().copy()
 
     # ------------------------------------------------------------------
