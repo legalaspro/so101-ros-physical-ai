@@ -68,8 +68,8 @@ def build_so101_blueprint() -> rrb.Blueprint:
             # Bottom Row: Time Series
             rrb.Horizontal(
                 rrb.TimeSeriesView(
-                    origin="/follower/joint_states",
-                    name="Joint States"
+                    origin="/follower/joint_states/position",
+                    name="Joint Positions"
                 ),
                 rrb.TimeSeriesView(
                     origin="/follower/forward_controller/commands",
