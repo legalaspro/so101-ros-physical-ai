@@ -33,6 +33,11 @@ def generate_launch_description():
     arm_controller = LaunchConfiguration("arm_controller")
     cameras_config_file = LaunchConfiguration("cameras_config_file")
 
+    cam_static_xyz = LaunchConfiguration("cam_static_xyz")
+    cam_static_rpy = LaunchConfiguration("cam_static_rpy")
+    cam_wrist_xyz = LaunchConfiguration("cam_wrist_xyz")
+    cam_wrist_rpy = LaunchConfiguration("cam_wrist_rpy")
+
     recording_config_file = LaunchConfiguration("recording_config_file")
     root_dir = LaunchConfiguration("root_dir")
     experiment_name = LaunchConfiguration("experiment_name")
@@ -58,6 +63,10 @@ def generate_launch_description():
             "follower_controller_config_file": follower_ctrl_cfg,
             "arm_controller": arm_controller,
             "cameras_config_file": cameras_config_file,
+            "cam_static_xyz": cam_static_xyz,
+            "cam_static_rpy": cam_static_rpy,
+            "cam_wrist_xyz": cam_wrist_xyz,
+            "cam_wrist_rpy": cam_wrist_rpy,
             "use_rviz": "false",
         }.items(),
     )
@@ -133,6 +142,27 @@ def generate_launch_description():
             DeclareLaunchArgument("follower_controller_config_file", default_value=default_follower_ctrl_cfg),
             DeclareLaunchArgument("arm_controller", default_value="forward_controller"),
             DeclareLaunchArgument("cameras_config_file", default_value=default_cameras_cfg),
+            # Camera TF overrides
+            DeclareLaunchArgument(
+                "cam_static_xyz",
+                default_value="0.2 0.0 0.60",
+                description="Static camera position relative to base_link (x y z meters)",
+            ),
+            DeclareLaunchArgument(
+                "cam_static_rpy",
+                default_value="0.0 1.5708 0.0",
+                description="Static camera orientation relative to base_link (roll pitch yaw radians)",
+            ),
+            DeclareLaunchArgument(
+                "cam_wrist_xyz",
+                default_value="0.0 0.0 -0.02",
+                description="Wrist camera position relative to end-effector link (x y z meters)",
+            ),
+            DeclareLaunchArgument(
+                "cam_wrist_rpy",
+                default_value="-1.5708 0.0 -1.5708",
+                description="Wrist camera orientation relative to end-effector link (roll pitch yaw radians)",
+            ),
             # Recorder
             DeclareLaunchArgument("recording_config_file", default_value=default_recording_cfg),
             DeclareLaunchArgument("root_dir", default_value=default_root_dir),
