@@ -7,7 +7,7 @@ name = "policy_server"
 version = "0.1.0"
 description = "GPU-side policy inference server for SO-101 (LeRobot). Supports ZMQ and gRPC transports."
 readme = {text = "GPU-side policy inference server that loads LeRobot policies and serves action predictions over ZMQ or gRPC.", content-type = "text/plain"}
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [
     {name = "Dmitri Manajev", email = "dmitri@manajev.com"},
@@ -34,4 +34,3 @@ policy-server = "policy_server.server:main"
 # The policy_server package lives in "." relative to this pyproject.toml
 package-dir = {"policy_server" = "."}
 packages = ["policy_server"]
-
