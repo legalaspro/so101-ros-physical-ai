@@ -157,6 +157,16 @@ class AsyncInferenceClient:
         self.shutdown_event.set()
         if self._inference_thread is not None:
             self._inference_thread.join(timeout=1.0)
+
+        if self._inference_thread is None or not self._inference_thread.is_alive():
+            try:
+                if self._transport.shutdown_remote():
+                    self._log.info("🧹 Remote policy/session released")
+            except Exception:
+                self._log.exception("Best-effort remote shutdown failed")
+        else:
+            self._log.warning("Inference thread still running during shutdown; skipping remote shutdown")
+
         self._transport.close()
         self._log.info("🛑 Shutdown complete")
 

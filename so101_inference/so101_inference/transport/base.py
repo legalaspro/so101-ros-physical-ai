@@ -100,3 +100,11 @@ class PolicyTransport(ABC):
             List of timed actions from the server.
         """
         ...
+
+    def shutdown_remote(self) -> bool:
+        """Best-effort request for the remote server to release session resources.
+
+        Returns:
+            True if the transport knows the request was accepted, False otherwise.
+        """
+        return False

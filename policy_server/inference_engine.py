@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import gc
 import logging
 import threading
 import time
@@ -173,13 +174,39 @@ class InferenceEngine:
     # Reset
     # ------------------------------------------------------------------
 
-    def reset(self) -> None:
-        """Flush state (e.g. when a new client connects)."""
-        self.shutdown_event.set()
+    def unload_policy(self) -> None:
+        """Release the loaded policy and related processor state."""
+        had_policy = any(
+            component is not None
+            for component in (self.policy, self.preprocessor, self.postprocessor)
+        )
+
+        self.device = None
+        self.policy_type = None
+        self.lerobot_features = None
+        self.actions_per_chunk = None
+        self.policy = None
+        self.preprocessor = None
+        self.postprocessor = None
+
+        if had_policy:
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            logger.info("Policy unloaded and caches released")
+
+    def clear_session(self) -> None:
+        """Flush per-client/session state without stopping the server."""
         self.observation_queue = Queue(maxsize=1)
         with self._predicted_timesteps_lock:
             self._predicted_timesteps = set()
         self.last_processed_obs = None
+        self.unload_policy()
+
+    def reset(self) -> None:
+        """Flush state and mark the engine as stopped."""
+        self.shutdown_event.set()
+        self.clear_session()
 
     def resume(self) -> None:
         """Clear the shutdown flag so the engine accepts work again."""
@@ -192,6 +219,10 @@ class InferenceEngine:
     def load_policy(self, config: RemotePolicyConfig) -> None:
         if config.policy_type not in SUPPORTED_POLICIES:
             raise ValueError(f"Unsupported policy type {config.policy_type}. Supported: {SUPPORTED_POLICIES}")
+
+        if self.policy is not None:
+            logger.info("Replacing existing policy; unloading previous model first")
+            self.unload_policy()
 
         self.device = config.device
         self.policy_type = config.policy_type

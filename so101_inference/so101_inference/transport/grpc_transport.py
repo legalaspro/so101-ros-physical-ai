@@ -153,3 +153,8 @@ class GrpcTransport(PolicyTransport):
         """Send an observation and receive actions (wrapper over send + receive)."""
         self.send_observation(obs)
         return self.receive_actions()
+
+    def shutdown_remote(self) -> bool:
+        """Best-effort remote shutdown is not currently supported over gRPC."""
+        self._log.debug("gRPC transport does not support remote shutdown; skipping")
+        return False

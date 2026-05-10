@@ -185,6 +185,25 @@ class ZmqTransport(PolicyTransport):
         self._req = self._ctx = None
         self._log.info("ZMQ transport closed")
 
+    def shutdown_remote(self) -> bool:
+        """Ask the server to unload the active policy/session state."""
+        if self._req is None:
+            return False
+        try:
+            t0 = time.perf_counter()
+            self._req.send(msgpack.packb({"type": "disconnect"}, use_bin_type=True))
+            reply = msgpack.unpackb(self._req.recv(), raw=False)
+            ms = (time.perf_counter() - t0) * 1000
+            ok = reply.get("status") == "ok"
+            if ok:
+                self._log.info(f"📡 Remote disconnect OK | {ms:.1f} ms")
+            else:
+                self._log.warning(f"Remote disconnect failed: {reply}")
+            return ok
+        except zmq.ZMQError as exc:
+            self._log.error(f"shutdown_remote error: {exc}")
+            return False
+
     def handshake(self) -> bool:
         """Send a handshake request and wait for server acknowledgement."""
         try:
