@@ -164,7 +164,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument("fps", default_value="30.0"),
             # DeclareLaunchArgument("device", default_value="cuda"),
-            DeclareLaunchArgument("use_rerun", default_value="true"),
+            DeclareLaunchArgument("use_rerun", default_value="false"),
             DeclareLaunchArgument(
                 "rerun_env_dir",
                 # Best: set env var once, no need to pass each run:

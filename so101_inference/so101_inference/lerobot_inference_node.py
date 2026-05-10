@@ -16,6 +16,8 @@
 SO101 LeRobot ROS2 Inference Node
 """
 
+import ssl  # Preload pixi/conda OpenSSL before rclpy loads system libcrypto.
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
@@ -262,7 +264,7 @@ class LeRobotInferenceNode(Node):
                     obs[name] = torch.from_numpy(obs[name])
                 if "image" in name:
                     obs[name] = obs[name].float() / 255.0
-                    obs[name] = obs[name].permute(2, 0, 1).contiguous()
+                    obs[name] = obs[name].permute(2, 0, 1).contiguous() # HWC => CHW
                 # obs[name] = obs[name].unsqueeze(0).to(self.device) # done in preprocessor
 
             obs = self.preprocessor(obs)
