@@ -164,14 +164,19 @@ class ZmqPolicyServer:
             except zmq.Again:
                 time.sleep(0.01)
                 continue
+            except zmq.ZMQError as exc:
+                if not self.running or exc.errno in (zmq.ENOTSOCK, zmq.ETERM):
+                    logger.info("REQ/REP loop exiting during shutdown")
+                    break
+                logger.error(f"REQ/REP receive error: {exc}", exc_info=True)
+                break
 
             request = msgpack.unpackb(msg, raw=False)
             msg_type = request.get("type")
 
             if msg_type == "handshake":
                 logger.info("Handshake received")
-                self.engine.reset()
-                self.engine.resume()
+                self.engine.clear_session()
                 rep_socket.send(msgpack.packb({"status": "ok"}, use_bin_type=True))
 
             elif msg_type == "policy_config":
@@ -181,6 +186,17 @@ class ZmqPolicyServer:
                     rep_socket.send(msgpack.packb({"status": "ok"}, use_bin_type=True))
                 except Exception as exc:
                     logger.error(f"Failed to load policy: {exc}")
+                    rep_socket.send(
+                        msgpack.packb({"status": "error", "message": str(exc)}, use_bin_type=True)
+                    )
+
+            elif msg_type == "disconnect":
+                try:
+                    logger.info("Client disconnect received; releasing policy/session state")
+                    self.engine.clear_session()
+                    rep_socket.send(msgpack.packb({"status": "ok"}, use_bin_type=True))
+                except Exception as exc:
+                    logger.error(f"Disconnect error: {exc}", exc_info=True)
                     rep_socket.send(
                         msgpack.packb({"status": "error", "message": str(exc)}, use_bin_type=True)
                     )
@@ -270,8 +286,10 @@ class ZmqPolicyServer:
         except KeyboardInterrupt:
             logger.info("Shutting down...")
         finally:
-            self.engine.shutdown_event.set()
+            self.engine.stop()
             thread.join(timeout=2)
+            if thread.is_alive():
+                logger.warning("REQ/REP thread still alive during shutdown; closing socket anyway")
             rep.close(linger=0)
             ctx.term()
             logger.info("ZMQ server stopped")

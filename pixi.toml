@@ -38,11 +38,11 @@ viewer = { cmd = "python -m rerun" }
 # LeRobot docs commonly recommend ffmpeg in the conda env
 python = "3.12.*"
 pyyaml = ">=6.0.3,<7"
-numpy = ">=2.4.2,<3"
+numpy = ">=2.0,<2.3"
 ffmpeg = "*"
 
 [feature.lerobot.pypi-dependencies]
-lerobot = { version = ">=0.4.4, <0.5", extras = ["smolvla"] }
+lerobot = { version = "==0.5.1", extras = ["smolvla"] }
 grpcio = "*"
 grpcio-tools = "*"
 msgpack = "*"
