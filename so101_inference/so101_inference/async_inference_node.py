@@ -22,6 +22,7 @@ logic to :class:`AsyncInferenceClient`.
 from __future__ import annotations
 
 import json
+import ssl  # Preload pixi/conda OpenSSL before rclpy loads system libcrypto.
 import time
 
 import numpy as np
