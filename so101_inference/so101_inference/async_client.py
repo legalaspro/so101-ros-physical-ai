@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from queue import Queue
 from typing import Optional
 
@@ -58,6 +58,7 @@ class ClientCfg:
     max_age_s: float
     task: str
     aggregate_fn_name: str = "weighted_average"
+    rename_map: dict[str, str] = field(default_factory=dict)
 
 
 class AsyncInferenceClient:
@@ -138,6 +139,7 @@ class AsyncInferenceClient:
             self.lerobot_features,
             self.cfg.actions_per_chunk,
             self.cfg.policy_device,
+            rename_map=self.cfg.rename_map,
         )
         if not self._transport.send_policy_config(policy_config):
             raise RuntimeError("Transport send_policy_config() failed")

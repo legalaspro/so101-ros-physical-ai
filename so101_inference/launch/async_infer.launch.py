@@ -33,6 +33,7 @@ def generate_launch_description():
         DeclareLaunchArgument("max_age_s", default_value="0.2"),
         DeclareLaunchArgument("task", default_value="Put the green cube in the cup."),
         DeclareLaunchArgument("aggregate_fn_name", default_value="weighted_average"),
+        DeclareLaunchArgument("rename_map_json", default_value=""),
         # Topics
         DeclareLaunchArgument("fwd_topic", default_value="/follower/forward_controller/commands"),
         DeclareLaunchArgument("joints_topic", default_value="/follower/joint_states"),
@@ -61,6 +62,7 @@ def generate_launch_description():
                 "max_age_s": LaunchConfiguration("max_age_s"),
                 "task": LaunchConfiguration("task"),
                 "aggregate_fn_name": LaunchConfiguration("aggregate_fn_name"),
+                "rename_map_json": LaunchConfiguration("rename_map_json"),
                 "fwd_topic": LaunchConfiguration("fwd_topic"),
                 "joints_topic": LaunchConfiguration("joints_topic"),
                 "top_camera_topic": LaunchConfiguration("top_camera_topic"),

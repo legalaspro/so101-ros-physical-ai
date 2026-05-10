@@ -126,6 +126,7 @@ All parameters from the synchronous node plus:
 | `actions_per_chunk` | int | `100` | Number of actions requested per inference call |
 | `chunk_size_threshold` | float | `0.5` | Queue fill ratio below which a new observation is sent (0.0–1.0) |
 | `aggregate_fn_name` | string | `weighted_average` | Action aggregation strategy: `weighted_average`, `latest_only`, `average`, `conservative` |
+| `rename_map_json` | string | `""` | Optional JSON object passed to `RemotePolicyConfig.rename_map`; empty string or `{}` leaves the policy repo's default rename map untouched |
 | `use_compressed` | bool | `false` | Subscribe to `CompressedImage` topics and send JPEG bytes to the server |
 
 ## Architecture

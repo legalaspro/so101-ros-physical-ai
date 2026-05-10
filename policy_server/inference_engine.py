@@ -204,13 +204,15 @@ class InferenceEngine:
         self.policy.to(self.device)
 
         device_override = {"device": self.device}
+        preprocessor_overrides = {"device_processor": device_override}
+        # Only override the rename_map if the client actually provides one.
+        # This prevents wiping out a rename_map that might already be in the repo.
+        if config.rename_map:
+            preprocessor_overrides["rename_observations_processor"] = {"rename_map": config.rename_map}
         self.preprocessor, self.postprocessor = make_pre_post_processors(
             self.policy.config,
             pretrained_path=config.pretrained_name_or_path,
-            preprocessor_overrides={
-                "device_processor": device_override,
-                "rename_observations_processor": {"rename_map": config.rename_map},
-            },
+            preprocessor_overrides=preprocessor_overrides,
             postprocessor_overrides={"device_processor": device_override},
         )
         elapsed = time.perf_counter() - start

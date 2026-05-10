@@ -21,6 +21,7 @@ logic to :class:`AsyncInferenceClient`.
 
 from __future__ import annotations
 
+import json
 import time
 
 import numpy as np
@@ -63,6 +64,22 @@ def _build_lerobot_features(cam_top: str, cam_wrist: str) -> dict:
     }
 
 
+def _parse_rename_map_json(raw: str) -> dict[str, str]:
+    """Parse optional JSON rename_map parameter for RemotePolicyConfig."""
+    raw = (raw or "").strip()
+    if not raw or raw == "{}":
+        return {}
+
+    data = json.loads(raw)
+    if data is None or data == {}:
+        return {}
+    if not isinstance(data, dict):
+        raise ValueError("rename_map_json must be a JSON object mapping strings to strings")
+    if not all(isinstance(k, str) and isinstance(v, str) for k, v in data.items()):
+        raise ValueError("rename_map_json keys and values must all be strings")
+    return data
+
+
 class AsyncRos2InferenceClient(Node):
     """Thin ROS2 wrapper that delegates inference to ``AsyncInferenceClient``."""
 
@@ -87,6 +104,7 @@ class AsyncRos2InferenceClient(Node):
         self.declare_parameter("max_age_s", 0.2)
         self.declare_parameter("task", "put the green cube in the cup")
         self.declare_parameter("aggregate_fn_name", "weighted_average")
+        self.declare_parameter("rename_map_json", "")
 
         self.declare_parameter("fwd_topic", "/follower/forward_controller/commands")
         self.declare_parameter("joints_topic", "/follower/joint_states")
@@ -113,6 +131,8 @@ class AsyncRos2InferenceClient(Node):
             ],
         )
 
+        rename_map = _parse_rename_map_json(str(self.get_parameter("rename_map_json").value))
+
         cfg = ClientCfg(
             server_address=str(self.get_parameter("server_address").value),
             policy_type=str(self.get_parameter("policy_type").value),
@@ -125,6 +145,7 @@ class AsyncRos2InferenceClient(Node):
             max_age_s=float(self.get_parameter("max_age_s").value),
             task=str(self.get_parameter("task").value),
             aggregate_fn_name=str(self.get_parameter("aggregate_fn_name").value),
+            rename_map=rename_map,
         )
 
         self.fwd_topic = str(self.get_parameter("fwd_topic").value)
@@ -238,6 +259,7 @@ class AsyncRos2InferenceClient(Node):
         self._log.info(f"  fps:                {self.cfg.fps:.1f}  (period={period * 1000:.1f}ms)")
         self._log.info(f"  actions/chunk:      {self.cfg.actions_per_chunk}")
         self._log.info(f"  chunk_threshold:    {self.cfg.chunk_size_threshold}")
+        self._log.info(f"  rename_map:         {self.cfg.rename_map or {}}")
         self._log.info(f"  max_age_s:          {self.cfg.max_age_s}")
         self._log.info(f"  task:               {self.cfg.task}")
         self._log.info("=" * 60)
